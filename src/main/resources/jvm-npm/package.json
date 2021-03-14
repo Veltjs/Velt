@@ -1,0 +1,40 @@
+{
+  "name": "jvm-npm",
+  "version": "0.1.1",
+  "description": "Support for NPM module loading in Javascript runtimes on the JVM",
+  "main": "src/main/javascript/jvm-npm.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "mvn integration-test",
+    "lint": "eslint src/main/javascript/jvm-npm.js"
+  },
+  "files": [
+    "package.json",
+    "pom.xml",
+    "README.md",
+    "src"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nodyn/jvm-npm.git"
+  },
+  "author": "Lance Ball <lball@redhat.com> (http://lanceball.com)",
+  "contributors": [
+    "Bob McWhirter <bmcwhirter@redhat.com>",
+    "Helio Frota <hesilva@redhat.com> (http://lanceball.com)"],
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/nodyn/jvm-npm/issues"
+  },
+  "homepage": "https://github.com/nodyn/jvm-npm#readme",
+  "devDependencies": {
+    "eslint": "^3.5.0",
+    "eslint-config-semistandard": "^7.0.0",
+    "eslint-config-standard": "^6.0.1",
+    "eslint-plugin-promise": "^2.0.1",
+    "eslint-plugin-react": "^6.2.2",
+    "eslint-plugin-standard": "^2.0.0"
+  }
+}

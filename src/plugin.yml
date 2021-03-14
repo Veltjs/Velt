@@ -1,0 +1,6 @@
+main: xyz.corman.velt.Velt
+name: Velt
+version: 0.0.1-alpha
+author: Corman
+description: Write code to interact with Spigot using Javascript and Node.
+commands: {}
