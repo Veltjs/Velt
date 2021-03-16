@@ -17,12 +17,24 @@ import org.graalvm.polyglot.Source;
 
 import xyz.corman.velt.modules.FileSystem;
 
+//import org.bstats.bukkit.Metrics;
+//import org.bstats.charts.CustomChart;
+//import org.bstats.charts.SimplePie;
+
 public class Velt extends JavaPlugin implements Listener {
 	private static Velt instance;
 	
 	File dataFolder;
 	File scriptsFolder;
 	File modulesFolder;
+	String[] extensions = new String[] {
+		".js",
+		".ts",
+		".mjs",
+		".mts",
+		".jsx",
+		".tsx"
+	};
 	
 	public static Velt getInstance() {
 		return instance;
@@ -52,6 +64,12 @@ public class Velt extends JavaPlugin implements Listener {
 		FileSystem.setInstance(new FileSystem(this));
 	}
 	
+	public void loadBStats() {
+        int pluginId = 10685; // <-- Replace with the id of your plugin!
+        Metrics metrics = new Metrics(this, pluginId);
+        metrics.addCustomChart(new Metrics.SimplePie("Script Count", () -> String.format("%s", scriptsFolder.listFiles().length)));
+        metrics.addCustomChart(new Metrics.SimplePie("Version", () -> this.getDescription().getVersion()));
+	}
 	public void onEnable() {
 		instance = this;
 		dataFolder = getDataFolder();
@@ -181,6 +199,16 @@ public class Velt extends JavaPlugin implements Listener {
 				Utils.runInPluginContext(() -> {
 					for (File file : scriptsFolder.listFiles()) {
 						String fileName = file.getPath();
+						boolean hasExtension = false;
+						for (String extension : extensions) {
+							if (fileName.endsWith(extension)) {
+								hasExtension = true;
+								break;
+							}
+						}
+						if (!hasExtension) {
+							continue;
+						}
 						Context context = ContextCreation.createContext();
 						String path = file.getAbsolutePath();
 						String loaderPath = String.join(File.separator, dataFolder.getAbsolutePath(), "node_modules", "velt-loader", "index.js")
@@ -195,6 +223,8 @@ public class Velt extends JavaPlugin implements Listener {
 				});
 			}
 		}.runTaskLater(this, 0);
+		
+		loadBStats();
 	}
 	public static Source fromString(String string, String path) {
 		return Source.newBuilder("js", string, path).buildLiteral();

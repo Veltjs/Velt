@@ -28,6 +28,32 @@ const util = require('util');
 const plugin = Velt.getInstance();
 let events = Events.getInstance();
 
+const plugins = {
+	getManager() {
+		return Bukkit.getPluginManager();
+	},
+	getPlugins(names = true) {
+		let arr = this.getManager().getPlugins();
+		if (names) {
+			arr = arr.map(i => i.getName());
+		}
+		return arr;
+	},
+	fromName(name) {
+		return this.getManager().getPlugin(name);
+	},
+	isEnabled(name) {
+		return this.fromName(name).isEnabled();
+	},
+	disable(name) {
+		return this.getManager().disablePlugin(this.fromName(name))
+	},
+	enable(name) {
+		return this.getManager().enablePlugin(this.fromName(name))
+	}
+};
+
+
 function isJavaInstance(obj, cls) {
 	if (Array.isArray(cls)) {
 		for (i of cls) {
@@ -427,7 +453,9 @@ let server = {
 				cmd.setTabCompleter(tabCompleter);
 			}
 			Utils.getCommandMap().register(plugin.getDescription().getName(), cmd);
-			Utils.addKnownCommand(name, cmd);
+			const nameArr = [ name, ...aliases ];
+			const names = [...new Set(nameArr) ];
+			Utils.addAliases(internals.javaArrToJSArr(names), cmd);
 			
 			return {
 				tabComplete(call) {

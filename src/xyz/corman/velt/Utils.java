@@ -8,9 +8,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -22,6 +25,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.util.Vector;
 import org.graalvm.polyglot.Value;
 
@@ -77,25 +81,38 @@ public class Utils {
 	public static VeltCommand makeVeltCommand(String label, String name, List<String> aliases, String description, String usage, CommandExecute executor, Plugin plugin) {
 		return new VeltCommand(label, name, aliases, description, usage, executor, plugin);
 	}
-	public static CommandMap getCommandMap() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		Server server = Bukkit.getServer();
-        Method getCommandMap = server.getClass().getDeclaredMethod("getCommandMap");
-        getCommandMap.setAccessible(true);
-        return (CommandMap) getCommandMap.invoke(server);
+	public static CommandMap getCommandMap() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchFieldException {
+		Field commandMapField = SimplePluginManager.class.getDeclaredField("commandMap");
+		commandMapField.setAccessible(true);
+        return (CommandMap) commandMapField.get(Bukkit.getServer());
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static Map<String, Object> getKnownCommands() throws IllegalArgumentException, IllegalAccessException, NoSuchMethodException, SecurityException, InvocationTargetException, NoSuchFieldException {
-		Field field = SimpleCommandMap.class
-			.getDeclaredField("knownCommands");
-		field.setAccessible(true);
-		Map<String, Object> knownCommands = (Map<String, Object>) field.get(getCommandMap());
-		return knownCommands;
+	public static Map<String, Command> getKnownCommands() throws IllegalArgumentException, IllegalAccessException, NoSuchMethodException, SecurityException, InvocationTargetException, NoSuchFieldException {
+		Field knownCommandsField = SimpleCommandMap.class.getDeclaredField("knownCommands");
+		knownCommandsField.setAccessible(true);
+		return (Map<String, Command>) knownCommandsField.get(getCommandMap());
+	}
+
+	@SuppressWarnings("unchecked")
+	public static Set<String> getAliases() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
+		Field aliasesField = SimpleCommandMap.class.getDeclaredField("aliases");
+		aliasesField.setAccessible(true);
+		return (Set<String>) aliasesField.get(getCommandMap());
 	}
 	
-	public static void addKnownCommand(String name, Command command) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-		Map<String, Object> knownCommands = getKnownCommands();
-		knownCommands.put(name, command);
+	public static void addAliases(String[] names, VeltCommand command) throws IllegalArgumentException, IllegalAccessException, NoSuchMethodException, SecurityException, InvocationTargetException, NoSuchFieldException {
+		Map<String, Command> knownCommands = getKnownCommands();
+		Set<String> aliases;
+		try {
+			aliases = getAliases();
+		} catch (Exception e) {
+			aliases = new LinkedHashSet<String>();
+		}
+		for (String name : names) {
+			knownCommands.put(name, command);
+			aliases.add(name);
+		}
 	}
 	public static byte[] toBytes(String string) {
 		return string.getBytes();
