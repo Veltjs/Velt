@@ -67,8 +67,7 @@ public class Velt extends JavaPlugin implements Listener {
 	public void loadBStats() {
         int pluginId = 10685; // <-- Replace with the id of your plugin!
         Metrics metrics = new Metrics(this, pluginId);
-        metrics.addCustomChart(new Metrics.SimplePie("Script Count", () -> String.format("%s", scriptsFolder.listFiles().length)));
-        metrics.addCustomChart(new Metrics.SimplePie("Version", () -> this.getDescription().getVersion()));
+        metrics.addCustomChart(new Metrics.SimplePie("script_count", () -> String.format("%s", scriptsFolder.listFiles().length)));
 	}
 	public void onEnable() {
 		instance = this;
