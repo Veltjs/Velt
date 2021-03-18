@@ -8,7 +8,7 @@ try {
 const { Vector, BlockIterator } = Java.pkg('org.bukkit.util');
 const { Bukkit, ChatColor, Location , Material, World } = Java.pkg('org.bukkit');
 const ProjectileSource = Java.type('org.bukkit.projectiles.ProjectileSource');
-const ItemStack = Java.type('org.bukkit.inventory.ItemStack');
+const { ItemStack, ItemFlag } = Java.pkg('org.bukkit.inventory');
 const PotionEffectType = Java.type('org.bukkit.potion.PotionEffectType');
 const BukkitRunnable = Java.type('org.bukkit.scheduler.BukkitRunnable');
 const { EntityType, Entity, Player, Projectile, LivingEntity } = Java.pkg('org.bukkit.entity');
@@ -112,6 +112,9 @@ let server = {
 	enchantment(name) {
 		return Enchantment[server.unformat(name)];
 	},
+	itemflag(name) {
+		return ItemFlag.valueOf(server.unformat(name));
+	},
 	itemstack(material, opts = {}) {
 		const {
 			count = 1,
@@ -119,7 +122,9 @@ let server = {
 			lore = undefined, 
 			durability = undefined,
 			unbreakable = undefined,
-			enchantments = []
+			custommodeldata = undefined,
+			enchantments = [],
+			itemflags = []
 		} = opts;
 		let item;
 		let meta;
@@ -130,12 +135,15 @@ let server = {
 		} else if (typeof material === 'string') {
 			return server.itemstack(
 				server.material(material), 
-				{ count, name, lore, durability, unbreakable, enchantments }
+				{ count, name, lore, durability, unbreakable, custommodeldata, enchantments, itemflags }
 			);
 		} else {
 			item = new ItemStack(material);
 		}
 		item.setAmount(count);
+		if (durability !== undefined) {
+			item.setDurability(durability);
+		}
 		meta = item.getItemMeta();
 		if (name !== undefined) {
 			meta.setDisplayName(name);
@@ -147,19 +155,26 @@ let server = {
 			} else {
 				loreArray = lore;
 			}
-			
 			meta.setLore(Arrays.asList(loreArray));
-		}
-		if (durability !== undefined) {
-			meta.setDurability(durability);
 		}
 		if (unbreakable !== undefined) {
 			meta.setUnbreakable(unbreakable);
+		}
+		if (custommodeldata !== undefined) {
+			meta.setCustomModelData(custommodeldata);
 		}
 		for (const enchantment of enchantments) {
 			const type = enchantment.type || enchantment.enchant || enchantment.enchantment;
 			const enchant = typeof type === 'string' ? server.enchant(type) : type;
 			meta.addEnchant(enchant, enchantment.level, true);
+		}
+		if(itemflags.length > 0) {
+			let flags = [];
+			for(const itemflag of itemflags) {
+				const flag = typeof itemflag === 'string' ? server.itemflag(itemflag) : itemflag;
+				flags.push(flag);
+			}
+			meta.addItemFlags(...flags);
 		}
 		item.setItemMeta(meta);
 		return item;
