@@ -1,6 +1,6 @@
 main: xyz.corman.velt.Velt
 name: Velt
-version: 0.0.2-alpha
+version: 0.0.3-alpha
 author: Corman
-description: Create minecraft code with JavaScript
+description: Interact with Spigot using JavaScript
 commands: {}

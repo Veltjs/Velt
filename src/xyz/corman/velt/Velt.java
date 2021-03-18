@@ -100,6 +100,10 @@ public class Velt extends JavaPlugin implements Listener {
 			"velt-storage.js",
 			"npm.js",
 			
+			"velt.d.ts",
+			"velt-helpers.d.ts",
+			"velt-storage.d.ts",
+			
 			/*==============================
 			 * Node module dependencies
 			 =============================*/

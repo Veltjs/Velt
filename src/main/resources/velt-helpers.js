@@ -115,6 +115,8 @@ function equip(entity, equipment) {
 	}
 }
 
+const guis = [];
+
 class Gui {
 	constructor(name, rows, movable = false) {
 		const slots = rows * 9;
@@ -125,7 +127,7 @@ class Gui {
 		for (let i = 0; i < slots; i++) {
 			this.movable[i] = movable;
 		}
-		server.guis.push(this);
+		guis.push(this);
 	}
 	set(slot, item, options) {
 		let movable, run, close;
@@ -143,7 +145,13 @@ class Gui {
 		}
 		this.inv.setItem(slot, cast.asItemStack(item));
 		this.movable[slot] = movable;
-		this.callbacks[slot] = run;
+		this.callbacks[slot] = event => {
+			const out = run(event);
+			if (close) {
+				event.getWhoClicked().getInventory().closeInventory();
+			}
+			return out;
+		};
 		return this;
 	}
 	unset(slot) {
@@ -169,7 +177,7 @@ Gui.prototype.open = Gui.prototype.show;
 server.on('InventoryClickEvent', event => {
 	let clickedInv = event.getClickedInventory();
 	let slot = event.getSlot();
-	server.guis.forEach(gui => {
+	guis.forEach(gui => {
 		let { inv } = gui;
 		if (clickedInv !== inv) return;
 		let callback = gui.callbacks[slot];
@@ -212,7 +220,7 @@ class Pathfinder {
 				pathfinder.stopPathfinding();
 				return;
 			}
-			let path = pathfinder.moveTo(cast.asLocation(loc), speed);
+			pathfinder.moveTo(cast.asLocation(loc), speed);
 			return this;
 		} catch (e) {
 			throw e;

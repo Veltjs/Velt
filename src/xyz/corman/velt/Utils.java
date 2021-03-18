@@ -84,7 +84,7 @@ public class Utils {
 	public static CommandMap getCommandMap() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchFieldException {
 		Field commandMapField = SimplePluginManager.class.getDeclaredField("commandMap");
 		commandMapField.setAccessible(true);
-        return (CommandMap) commandMapField.get(Bukkit.getServer());
+        return (CommandMap) commandMapField.get(Bukkit.getPluginManager());
 	}
 	
 	@SuppressWarnings("unchecked")

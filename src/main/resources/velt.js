@@ -65,7 +65,6 @@ function isJavaInstance(obj, cls) {
 }
 
 let server = {
-	guis: [],
 	waiting: {},
 	callbacks: {},
 	anyEvent: Symbol('anyEvent'),
@@ -499,6 +498,8 @@ server.once = server.waitFor;
 server.stop = server.shutdown;
 server.reboot = server.restart;
 server.enchant = server.enchantment;
+
+server.plugins = plugins;
 
 let internals = {
 	reconstructTemplate(text, args) {
