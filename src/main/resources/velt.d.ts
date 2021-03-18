@@ -181,7 +181,12 @@ interface Server {
 	 * @alias enchantment
 	 */
 	enchant(name: string): any;
-	/**
+    /**
+	 * Get an itemflag from its **Spigot** name. For example, `hide enchants'.
+	 * @param name The itemflag name (eg. `hide attributes`)
+	 */
+	itemflag(name: string): any;
+    /**
 	 * Get an itemstack from the material name and the options.
 	 */
 	itemstack(material: string, opts?: {} | string): any;
