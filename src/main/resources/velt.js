@@ -141,6 +141,9 @@ let server = {
 			item = new ItemStack(material);
 		}
 		item.setAmount(count);
+		if (durability !== undefined) {
+			item.setDurability(durability);
+		}
 		meta = item.getItemMeta();
 		if (name !== undefined) {
 			meta.setDisplayName(name);
@@ -153,9 +156,6 @@ let server = {
 				loreArray = lore;
 			}
 			meta.setLore(Arrays.asList(loreArray));
-		}
-		if (durability !== undefined) {
-			item.setDurability(durability);
 		}
 		if (unbreakable !== undefined) {
 			meta.setUnbreakable(unbreakable);
