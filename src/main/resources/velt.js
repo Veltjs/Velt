@@ -122,6 +122,7 @@ let server = {
 			lore = undefined, 
 			durability = undefined,
 			unbreakable = undefined,
+			enchantments = [],
 			custommodeldata = undefined,
 			enchantments = [],
 			itemflags = []
@@ -155,7 +156,11 @@ let server = {
 			} else {
 				loreArray = lore;
 			}
+			
 			meta.setLore(Arrays.asList(loreArray));
+		}
+		if (durability !== undefined) {
+			meta.setDurability(durability);
 		}
 		if (unbreakable !== undefined) {
 			meta.setUnbreakable(unbreakable);
@@ -163,18 +168,18 @@ let server = {
 		if (custommodeldata !== undefined) {
 			meta.setCustomModelData(custommodeldata);
 		}
-		for (const enchantment of enchantments) {
-			const type = enchantment.type || enchantment.enchant || enchantment.enchantment;
-			const enchant = typeof type === 'string' ? server.enchant(type) : type;
-			meta.addEnchant(enchant, enchantment.level, true);
-		}
-		if(itemflags.length > 0) {
+		if (itemflags.length > 0) {
 			let flags = [];
-			for(const itemflag of itemflags) {
+			for (const itemflag of itemflags) {
 				const flag = typeof itemflag === 'string' ? server.itemflag(itemflag) : itemflag;
 				flags.push(flag);
 			}
 			meta.addItemFlags(...flags);
+		}
+		for (const enchantment of enchantments) {
+			const type = enchantment.type || enchantment.enchant || enchantment.enchantment;
+			const enchant = typeof type === 'string' ? server.enchant(type) : type;
+			meta.addEnchant(enchant, enchantment.level, true);
 		}
 		item.setItemMeta(meta);
 		return item;
@@ -427,7 +432,7 @@ let server = {
 							sender.sendMessage(playerOnly);
 							return true;
 						} else {
-							const res = run(sender, ...args);
+							const res = run(sender, ...parsed);
 							if (res === false) {
 								return false;
 							}
@@ -441,22 +446,17 @@ let server = {
 				return false;				
 			};
 			let tabCompleter = undefined;
-			/*let TabCompleterType = undefined;
-			if (TabCompleter) {
-				TabCompleterType = Java.extend(TabCompleter, {
-					onTabComplete(sender, command, alias, args) {
-						let parsed = argParser(internals.javaArrToJSArr(args).join(' '));
-						if (tabComplete) {
-							out = tabComplete(sender, ...args);
-						} else {
-							out = [];
-						}
-						return internals.JSArrToJavaArr(out);
-					}
-				});
-				tabCompleter = new TabCompleterType();
-			}*/
-			let cmd = Utils.makeVeltCommand(label, name, internals.JSArrToJavaList(aliases), description, usage, handleCommand, plugin);
+			let TabCompleterType = undefined;
+			const handleTabComplete = (sender, alias, args) => {
+				let parsed = argParser(internals.javaArrToJSArr(args).join(' '));
+				if (tabComplete) {
+					out = tabComplete(sender, ...parsed);
+				} else {
+					out = [];
+				}
+				return internals.JSArrToJavaList(out);
+			}
+			let cmd = Utils.makeVeltCommand(label, name, internals.JSArrToJavaList(aliases), description, usage, handleCommand, handleTabComplete, plugin);
 			if (permission) {
 				cmd.setPermission(permission);
 			}
@@ -466,10 +466,12 @@ let server = {
 			if (tabCompleter) {
 				cmd.setTabCompleter(tabCompleter);
 			}
-			Utils.getCommandMap().register(plugin.getDescription().getName(), cmd);
+			Utils.getCommandMap().register(cmd.getName(), "velt", cmd);
 			const nameArr = [ name, ...aliases ];
 			const names = [...new Set(nameArr) ];
 			Utils.addAliases(internals.javaArrToJSArr(names), cmd);
+			
+			Bukkit.getServer().syncCommands();
 			
 			return {
 				tabComplete(call) {

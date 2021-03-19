@@ -78,13 +78,14 @@ public class Utils {
 	public static void printErrorTrace(Exception e) {
 		e.printStackTrace();
 	}
-	public static VeltCommand makeVeltCommand(String label, String name, List<String> aliases, String description, String usage, CommandExecute executor, Plugin plugin) {
-		return new VeltCommand(label, name, aliases, description, usage, executor, plugin);
+	public static VeltCommand makeVeltCommand(String label, String name, List<String> aliases, String description, String usage, CommandExecute executor, TabExecute tabExecutor, Plugin plugin) {
+		return new VeltCommand(label, name, aliases, description, usage, executor, tabExecutor, plugin);
 	}
 	public static CommandMap getCommandMap() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchFieldException {
 		Field commandMapField = SimplePluginManager.class.getDeclaredField("commandMap");
 		commandMapField.setAccessible(true);
-        return (CommandMap) commandMapField.get(Bukkit.getPluginManager());
+		CommandMap map = (CommandMap) commandMapField.get(Bukkit.getPluginManager());
+        return (CommandMap) map.getClass().getSuperclass().cast(map);
 	}
 	
 	@SuppressWarnings("unchecked")

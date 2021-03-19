@@ -1,6 +1,7 @@
 package xyz.corman.velt;
 
 import java.util.List;
+import java.util.ArrayList;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -8,15 +9,17 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginIdentifiableCommand;
 import org.bukkit.plugin.Plugin;
 
-public class VeltCommand extends Command implements PluginIdentifiableCommand {
+import org.bukkit.command.defaults.BukkitCommand;
+
+public class VeltCommand extends BukkitCommand {
 	CommandExecute executor;
-	Plugin plugin;
+	TabExecute tabExecutor;
 	
-	public VeltCommand(String label, String name, List<String> aliases, String description, String usage, CommandExecute executor, Plugin plugin) {
+	public VeltCommand(String label, String name, List<String> aliases, String description, String usage, CommandExecute executor, TabExecute tabExecutor, Plugin plugin) {
         super(name, description, usage, aliases);
         if (label != null) this.setLabel(label);
         this.executor = executor;
-        this.plugin = plugin;
+        this.tabExecutor = tabExecutor;
 	}
 
 	@Override
@@ -29,11 +32,12 @@ public class VeltCommand extends Command implements PluginIdentifiableCommand {
 		}
 		return this.executor.execute(sender, commandLabel, args);
 	}
-
-	@Override
-	public Plugin getPlugin() {
-		// TODO Auto-generated method stub
-		return plugin;
+	
+	public List<String> tabComplete(CommandSender sender, String alias, String[] args) {
+		ArrayList<String> empty = new ArrayList<>();
+		if (this.getPermission() != null && !sender.hasPermission(this.getPermission())) {
+			return empty;
+		}
+		return this.tabExecutor.execute(sender, alias, args);
 	}
-
 }
