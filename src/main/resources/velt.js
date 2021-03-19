@@ -122,7 +122,6 @@ let server = {
 			lore = undefined, 
 			durability = undefined,
 			unbreakable = undefined,
-			enchantments = [],
 			custommodeldata = undefined,
 			enchantments = [],
 			itemflags = []
@@ -158,9 +157,6 @@ let server = {
 			}
 			
 			meta.setLore(Arrays.asList(loreArray));
-		}
-		if (durability !== undefined) {
-			meta.setDurability(durability);
 		}
 		if (unbreakable !== undefined) {
 			meta.setUnbreakable(unbreakable);
