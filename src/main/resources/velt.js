@@ -122,7 +122,6 @@ let server = {
 			lore = undefined, 
 			durability = undefined,
 			unbreakable = undefined,
-			enchantments = [],
 			custommodeldata = undefined,
 			enchantments = [],
 			itemflags = []
