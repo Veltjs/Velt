@@ -168,6 +168,12 @@ class Gui {
 		});
 		return this;
 	}
+	clear() {
+		this.inv.clear();
+		this.callbacks = {};
+		this.movable = {};
+		return this;
+	}
 }
 
 Gui.prototype.format = Gui.prototype.set;

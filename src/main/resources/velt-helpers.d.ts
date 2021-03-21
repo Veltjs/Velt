@@ -93,6 +93,10 @@ export class Gui {
      * @alias show
      */
     open(...players: any[]): this;
+    /**
+     * Clear GUI including callbacks and movables
+     */
+    clear(): this;
 }
 
 /**
