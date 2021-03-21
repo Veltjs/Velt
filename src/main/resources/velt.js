@@ -14,6 +14,8 @@ const BukkitRunnable = Java.type('org.bukkit.scheduler.BukkitRunnable');
 const { EntityType, Entity, Player, Projectile, LivingEntity } = Java.pkg('org.bukkit.entity');
 const { Enchantment } = Java.pkg('org.bukkit.enchantments');
 
+const { Paths } = Java.pkg('java.nio.file');
+
 const String = Java.type('java.lang.String');
 
 const { Events, Utils } = Java.pkg('xyz.corman.velt');
@@ -26,7 +28,7 @@ const Velt = Java.type('xyz.corman.velt.Velt');
 const util = require('util');
 
 const plugin = Velt.getInstance();
-let events = Events.getInstance();
+let eventsInst = Events.getInstance();
 
 const plugins = {
 	getManager() {
@@ -64,7 +66,8 @@ function isJavaInstance(obj, cls) {
 	return Utils.isInstanceOf(cls, obj);
 }
 
-let server = {
+
+const events = {
 	waiting: {},
 	callbacks: {},
 	anyEvent: Symbol('anyEvent'),
@@ -75,6 +78,276 @@ let server = {
 			Bukkit.broadcastMessage(msg);
 		}
 	},
+	on(event, callback) {
+		if (Array.isArray(event)) {
+			const events = event.forEach(ev => this.on(ev, callback));
+			return {
+				close() {
+					events.forEach(ev => event.close());
+				}
+			}
+		} else {
+			if (!this.callbacks[event]) this.callbacks[event] = [];
+			this.callbacks[event].push(callback);
+		}
+		return {
+			close() {
+				let callbacks = events.callbacks[event];
+				callbacks.splice(callbacks.indexOf(callback), 1);
+			}
+		}
+	},
+	once(event, cond = undefined, options = undefined) {
+		if (options === undefined) {
+			var callback = undefined;
+			var timeout = undefined;
+		} else if (typeof options === 'function') {
+			var callback = options;
+			var timeout = undefined;
+		} else {
+			var { callback, timeout = undefined } = options;
+		}
+		if (timeout) {
+			return internals.timeout(
+				events.waitFor(event, cond, callback), timeout
+			);
+		}
+		if (Array.isArray(event)) {
+			event.forEach(ev => this.waitFor(ev, cond, callback));
+		} else {
+			let condition;
+			if (cond) {
+				condition = cond;
+			} else {
+				condition = event => true;
+			}
+			if (!this.waiting[event]) this.waiting[event] = [];
+			if (callback) {
+				this.waiting[event].push({event, condition, callback});
+			} else {
+				return new Promise(resolve => {
+					this.waiting[event].push(
+						{event, condition, callback: resolve}
+					);
+				});
+			}
+		}
+	},
+	handleEvent(event) {
+		let waiting = this.waiting[event.getClass().getSimpleName()];
+		if (waiting) {
+			waiting.forEach(({event: eventListenedFor, condition, callback}) => {
+				if (
+					(event.getClass().getSimpleName() !== eventListenedFor) || eventListenedFor === this.anyEvent
+				) return;
+				if (!condition(event)) return;
+				callback(event);
+				waiting.splice(waiting.indexOf(callback), 1);
+			});
+		}
+		let handler = this.callbacks[event.getClass().getSimpleName()];
+		if (!handler) return;
+		for (callback of handler) callback(event);
+		if (this.callbacks[this.anyEvent]) {
+			this.callbacks[this.anyEvent]
+				.forEach(callback => callback(event));
+		}
+	},
+}
+
+events.waitFor = events.once;
+
+const commands = {
+	runCommand(sender, command) {
+		Bukkit.dispatchCommand(sender, command);
+	},
+	runConsoleCommand(command) {
+		this.runCommand(Bukkit.getServer().getConsoleSender(), command);
+	},
+	delegateTab(subs, tab, sender, args) {
+		args = args ?? [];
+		subs = subs ?? [];
+		if (args == null) {
+			return [];
+		}
+		const [ arg ] = args;
+		if (arg != null) {
+			for (const sub of subs) {
+				if (sub.name === arg) {
+					return commands.delegateTab(sub.subs, sub.tabComplete, sender, args.slice(1));
+				}
+			}
+		}
+		const extras = args.length <= 1 ? subs.map(i => i.name) : [];
+		if (tab) {
+			return [ ...extras, ...tab(sender, ...args) ];		
+		} else {
+			return [ ...extras ];
+		}
+	},
+	delegateRun(subs, run, sender, args, current = null) {
+		args = args ?? [];
+		const arg = args?.[0];
+		if (arg != null) {
+			for (const sub of subs) {
+				if (sub.name === arg) {
+					return commands.delegateRun(sub.subs ?? [], sub.run, sender, args.slice(1), sub);
+				}
+			}
+		}
+		if (current != null) {
+			if (current.permission && !sender.hasPermission(current.permission)) {
+				if (current.permissionMessage) {
+					sender.sendMessage(current.permissionMessage);
+				}
+				return true;
+			}
+		}
+		if (run) {
+			return run(sender, ...args);
+		} else {
+			throw new Error('No run or subcommand found');
+		}
+	},
+	subCommand(cmd) {
+		if (typeof cmd === 'function') {
+			return {
+				name: cmd.name,
+				run: cmd
+			};
+		} else {
+			if (cmd.subs) {
+				const subCommands = [];
+				for (const [ sub, actual ] of Object.entries(cmd.subs)) {
+					subCommands.push({ name: sub, ...commands.subCommand(actual) });
+				}				
+				cmd.subs = subCommands;
+			}
+			return cmd;
+		}
+	},
+	create(...args) {
+		if (args.length === 1) {
+			if (typeof args[0] == 'function') {
+				return commands.create({ run: args[0] });
+			}
+
+			let {
+				description = 'A velt command',
+				usage = 'No given usage',
+				aliases = [],
+				subs = [],
+				label = 'velt',
+				run = undefined,
+				tabComplete = undefined,
+				name = undefined,
+				permission = undefined,
+				permissionMessage = undefined,
+				playerOnly = undefined,
+				argParser =  str => str.match(/\\?.|^$/g)
+					.reduce((p, c) => {
+						if (c === '"'){
+							p.quote ^= 1;
+						} else if (!p.quote && c === ' '){
+							p.a.push('');
+						} else {
+							p.a[p.a.length-1] += c.replace(/\\(.)/,"$1");
+						}
+						return p;
+					}, {a: ['']}).a
+			} = args[0];
+			
+			if (name === undefined) {
+				name = run.name;
+			}
+			
+			const subCommands = [];
+
+			const handleCommand = (sender, label, args) => {
+				let parsed = argParser(internals.javaArrToJSArr(args).join(' '));
+				if (run || subCommands.length > 0) {
+					try {
+						if (playerOnly && commands.isConsole(sender)) {
+							sender.sendMessage(playerOnly);
+							return true;
+						} else {
+							const res = commands.delegateRun(subCommands, run, sender, parsed);
+							if (res === false) {
+								return false;
+							}
+							if (typeof res === 'string') {
+								sender.sendMessage(res);
+							}
+						}
+					} catch (e) {
+						console.error(e);
+						return false;
+					}
+					return true;
+				}
+				return false;				
+			};
+			const handleTabComplete = (sender, alias, args) => {
+				let parsed = argParser(internals.javaArrToJSArr(args).join(' '));
+				if (tabComplete || subCommands.length > 0) {
+					out = commands.delegateTab(subCommands, tabComplete, sender, parsed);
+				} else {
+					out = [];
+				}
+				return internals.JSArrToJavaList(out);
+			}
+			
+			let cmd = Utils.makeVeltCommand(label, name, internals.JSArrToJavaList(aliases), description, usage, handleCommand, handleTabComplete, plugin);
+			if (permission) {
+				cmd.setPermission(permission);
+			}
+			if (permissionMessage) {
+				cmd.setPermissionMessage(permissionMessage);
+			}
+			
+			Utils.getCommandMap().register(cmd.getName(), "velt", cmd);
+			Bukkit.getServer().syncCommands();
+			
+			for (const [ sub, actual ] of Object.entries(subs)) {
+				subCommands.push({ name: sub, ...commands.subCommand(actual) });
+			}
+			
+			return {
+				tabComplete(call) {
+					tabComplete = call;
+				},
+				run(call) {
+					run = call;
+				}
+			};
+		} else if (args.length == 2) {
+			if (typeof args[0] == 'string') {
+				let opts;
+				if (typeof args[1] == 'function') {
+					opts = {run: args[1]};
+				} else {
+					opts = args[1];
+				}
+				return commands.create({ 
+					name: args[0],
+					...opts
+				});
+			}
+			return commands.create({ run: args[0], ...args[1] });
+		} else if (args.length == 3) {
+			return commands.create({ 
+				name: args[0],
+				run: args[2],
+				...args[1]
+			});
+		}
+	},
+	isConsole(sender) {
+		return !sender instanceof Player;
+	},
+};
+
+const server = {
 	format(text) {
 		return text
 			.toUpperCase()
@@ -306,213 +579,25 @@ let server = {
 	restart() {
 		Bukkit.getServer().spigot().restart();
 	},
-	runCommand(sender, command) {
-		Bukkit.dispatchCommand(sender, command);
-	},
-	runConsoleCommand(command) {
-		this.runCommand(Bukkit.getServer().getConsoleSender(), command);
-	},
-	on(event, callback) {
-		if (Array.isArray(event)) {
-			const events = event.forEach(ev => this.on(ev, callback));
-			return {
-				close() {
-					events.forEach(ev => event.close());
-				}
-			}
-		} else {
-			if (!this.callbacks[event]) this.callbacks[event] = [];
-			this.callbacks[event].push(callback);
-		}
-		return {
-			close() {
-				let callbacks = server.callbacks[event];
-				callbacks.splice(callbacks.indexOf(callback), 1);
-			}
-		}
-	},
-	waitFor(event, cond = undefined, options = undefined) {
-		if (options === undefined) {
-			var callback = undefined;
-			var timeout = undefined;
-		} else if (typeof options === 'function') {
-			var callback = options;
-			var timeout = undefined;
-		} else {
-			var { callback, timeout = undefined } = options;
-		}
-		if (timeout) {
-			return internals.timeout(
-				server.waitFor(event, cond, callback), timeout
-			);
-		}
-		if (Array.isArray(event)) {
-			event.forEach(ev => this.waitFor(ev, cond, callback));
-		} else {
-			let condition;
-			if (cond) {
-				condition = cond;
-			} else {
-				condition = event => true;
-			}
-			if (!this.waiting[event]) this.waiting[event] = [];
-			if (callback) {
-				this.waiting[event].push({event, condition, callback});
-			} else {
-				return new Promise(resolve => {
-					this.waiting[event].push(
-						{event, condition, callback: resolve}
-					);
-				});
-			}
-		}
-	},
-	handleEvent(event) {
-		let waiting = this.waiting[event.getClass().getSimpleName()];
-		if (waiting) {
-			waiting.forEach(({event: eventListenedFor, condition, callback}) => {
-				if (
-					(event.getClass().getSimpleName() !== eventListenedFor) || eventListenedFor === this.anyEvent
-				) return;
-				if (!condition(event)) return;
-				callback(event);
-				waiting.splice(waiting.indexOf(callback), 1);
-			});
-		}
-		let handler = this.callbacks[event.getClass().getSimpleName()];
-		if (!handler) return;
-		for (callback of handler) callback(event);
-		if (this.callbacks[this.anyEvent]) {
-			this.callbacks[this.anyEvent]
-				.forEach(callback => callback(event));
-		}
-	},
-	createCommand(...args) {
-		if (args.length === 1) {
-			if (typeof args[0] == 'function') {
-				return server.createCommand({ callback: args[0] });
-			}
-			let {
-				description = 'A velt command',
-				usage = 'No given usage',
-				aliases = [],
-				label = 'velt',
-				run = undefined,
-				tabComplete = undefined,
-				name = undefined,
-				permission = undefined,
-				permissionMessage = undefined,
-				playerOnly = undefined,
-				argParser =  str => str.match(/\\?.|^$/g)
-					.reduce((p, c) => {
-						if (c === '"'){
-							p.quote ^= 1;
-						} else if (!p.quote && c === ' '){
-							p.a.push('');
-						} else {
-							p.a[p.a.length-1] += c.replace(/\\(.)/,"$1");
-						}
-						return p;
-					}, {a: ['']}).a
-			} = args[0];
-			
-			if (name === undefined) {
-				name = run.name;
-			}
-
-			const handleCommand = (sender, label, args) => {
-				let parsed = argParser(internals.javaArrToJSArr(args).join(' '));
-				if (run) {
-					try {
-						if (playerOnly && server.isConsole(sender)) {
-							sender.sendMessage(playerOnly);
-							return true;
-						} else {
-							const res = run(sender, ...parsed);
-							if (res === false) {
-								return false;
-							}
-						}
-					} catch (e) {
-						console.error(e);
-						return false;
-					}
-					return true;
-				}
-				return false;				
-			};
-			let tabCompleter = undefined;
-			let TabCompleterType = undefined;
-			const handleTabComplete = (sender, alias, args) => {
-				let parsed = argParser(internals.javaArrToJSArr(args).join(' '));
-				if (tabComplete) {
-					out = tabComplete(sender, ...parsed);
-				} else {
-					out = [];
-				}
-				return internals.JSArrToJavaList(out);
-			}
-			let cmd = Utils.makeVeltCommand(label, name, internals.JSArrToJavaList(aliases), description, usage, handleCommand, handleTabComplete, plugin);
-			if (permission) {
-				cmd.setPermission(permission);
-			}
-			if (permissionMessage) {
-				cmd.setPermissionMessage(permissionMessage);
-			}
-			if (tabCompleter) {
-				cmd.setTabCompleter(tabCompleter);
-			}
-			Utils.getCommandMap().register(cmd.getName(), "velt", cmd);
-			const nameArr = [ name, ...aliases ];
-			const names = [...new Set(nameArr) ];
-			Utils.addAliases(internals.javaArrToJSArr(names), cmd);
-			
-			Bukkit.getServer().syncCommands();
-			
-			return {
-				tabComplete(call) {
-					tabComplete = call;
-				},
-				run(call) {
-					run = call;
-				}
-			};
-		} else if (args.length == 2) {
-			if (typeof args[0] == 'string') {
-				let opts;
-				if (typeof args[1] == 'function') {
-					opts = {run: args[1]};
-				} else {
-					opts = args[1];
-				}
-				return server.createCommand({ 
-					name: args[0],
-					...opts
-				});
-			}
-			return server.createCommand({ run: args[0], ...args[1] });
-		} else if (args.length == 3) {
-			return server.createCommand({ 
-				name: args[0],
-				run: args[2],
-				...args[1]
-			});
-		}
-	},
-	isConsole(sender) {
-		return !sender instanceof Player;
-	},
 	isMob(entity, type) {
 		return entity instanceof Java.type(`org.bukkit.entity.${type}`);
 	}
 };
 
-server.once = server.waitFor;
 server.stop = server.shutdown;
 server.reboot = server.restart;
 server.enchant = server.enchantment;
 
 server.plugins = plugins;
+
+const scripts = {
+	get location() {
+		return plugin.getScriptsFolder();
+	},
+	path(...paths) {
+		return Paths.get(plugin.getScriptsFolder(), ...paths).toString();
+	}
+};
 
 let internals = {
 	reconstructTemplate(text, args) {
@@ -684,10 +769,32 @@ utils.colour = utils.colorize;
 utils.colourize = utils.colorize;
 utils.c = utils.colorize;
 
-events.listen(event => server.handleEvent(event));
+eventsInst.listen(event => events.handleEvent(event));
+
+const c = utils.color;
+
+const infoMsg = c`
+&5&lVelt Help
+&8-----------
+&b/velt &8| &b/velt info &8| &b/velt help &8| &fGet info on how to use Velt
+&b/velt reload &8| &fReload all of your Velt scripts
+&8-----------`;
+
+
+commands.create('velt', {
+    subs: {
+        info: () => infoMsg,
+        help: () => infoMsg,
+        reload: () => c`&5&lVelt &8| &b/velt reload &fis not yet implemented.`
+    },
+    run: () => infoMsg
+});
 
 module.exports = {
+	events,
+	commands,
 	server,
+	scripts,
 	cast,
 	utils,
 	internals,

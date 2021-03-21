@@ -80,7 +80,7 @@ public class Events {
         	    		}
         	    	}    			
         		}
-        	}.runTaskTimer(plugin, 0, 5);
+        	}.runTaskTimer(plugin, 0, 1);
     	} else {
 	    	ClassInfoList events = eventsInfo
 	    	        .getSubclasses()
@@ -109,5 +109,8 @@ public class Events {
 	
 	public void listen(Consumer<Event> consumer) {
 		consumers.add(consumer);
+	}
+	public void clearConsumers() {
+		consumers.clear();
 	}
 }

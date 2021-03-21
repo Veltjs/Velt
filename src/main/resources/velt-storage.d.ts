@@ -10,9 +10,11 @@
 /**
  * Options for getting items
  */
- interface ItemOpts<T> {
+interface ItemOpts<T> {
     default?: T;
 }
+
+type ValueOf<T> = T[keyof T];
 
 export class Item<T> {
     /**
@@ -27,43 +29,54 @@ export class Item<T> {
      * @param opts The options for getting this item, specifically the default value if this item has no value.
      * @alias item
      */
-    field<U extends keyof T>(index: U, opts?: ItemOpts<T[U]>): Field<T[U]>;
+    field<U extends keyof T>(index: ValueOf<T>, opts?: ItemOpts<T[U]>): Field<T[U]>;
+    /**
+      * Set a field of this `Item` to a value.
+      * @param index The field to be set
+      * @param val The value for the field to be set as
+    **/
+    setItem<U extends keyof T>(index: keyof T, val: T[U]): Field<T[U]>;
+    /**
+      * Get the value of the given field of this `Item`.
+      * @param index The field to get
+    */
+    getItem<U extends keyof T>(index: keyof T): T[U];
     /**
      * *This only works for items with their value as an array*
      * Find the item that matches the condition from this `Item<U[]>`
      * @param cond The condition to find the item with.
      */
-    find<U>(cond: (val: U) => any): U | Nothing;
+    find<U extends ValueOf<T>>(cond: (val: U) => any): U | Nothing;
     /**
      * *This only works for items with their value as an array*
      * Check if this `Item<U[]>` has an item that matches the condition
      * @param cond The condition to find the item with.
      */
-    has<U>(cond: (val: U) => any): boolean;
+    has<U extends ValueOf<T>>(cond: (val: U) => any): boolean;
     /**
      * *This only works for items with their value as an array*
      * Remove all items that match the condition from this `Item<U[]>`
      * @param cond The condition to find the item with.
      */
-    filter<U>(cond: (val: U) => any): this;
+    filter<U extends ValueOf<T>>(cond: (val: U) => any): this;
     /**
      * *This only works for items with their value as an array*
      * Remove the given item from this `Item<U[]>`
      * @param val The item to remove
      */
-    remove<U>(val: U): this;
+    remove<U extends ValueOf<T>>(val: U): this;
     /**
      * *This only works for items with their value as an array*
      * Add the given item to this `Item<U[]>`
      * @param val The item to push
      */
-    push<U>(val: U): this;
+    push<U extends ValueOf<T>>(val: U): this;
     /**
      * *This only works for items with properties like objects or arrays*
      * Pop the given index or property from this `Item`.
      * @param val The item to pop
      */
-    pop<U>(val: U): T;
+    pop(val: keyof T): T;
     /**
      * If there is no value for this `Item` already, and the `val` isn't `null` or `undefined` or anything either, set the value to the `val`.
      * @param val 
@@ -73,6 +86,11 @@ export class Item<T> {
      * Get the current value of this `Item`.
      */
     get<T>(): T;
+    /**
+      * List all of the items in this `Item`. 
+      * If the value is an an array, returns the value, otherwise, it returns the keys of the value.
+    */ 
+    list<T>(): (ValueOf<T>)[] | (keyof T)[];
     /**
      * *This only works for items with a number*
      * Increase this `Item` by the given number.

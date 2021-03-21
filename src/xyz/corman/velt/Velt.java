@@ -4,14 +4,20 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 import org.apache.commons.lang.StringEscapeUtils;
+import org.bukkit.Bukkit;
+import org.bukkit.Server;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 
@@ -24,9 +30,11 @@ import xyz.corman.velt.modules.FileSystem;
 public class Velt extends JavaPlugin implements Listener {
 	private static Velt instance;
 	
-	File dataFolder;
-	File scriptsFolder;
-	File modulesFolder;
+	private File dataFolder;
+	private File scriptsFolder;
+	private File modulesFolder;
+	private File libFolder;
+	Logger log;
 	String[] extensions = new String[] {
 		".js",
 		".ts",
@@ -35,6 +43,15 @@ public class Velt extends JavaPlugin implements Listener {
 		".jsx",
 		".tsx"
 	};
+	
+	private Context context;
+	
+	public String getScriptsFolder() {
+		return scriptsFolder.getAbsolutePath();
+	}
+	public File getLibFolder() {
+		return libFolder;
+	}
 	
 	public static Velt getInstance() {
 		return instance;
@@ -70,17 +87,22 @@ public class Velt extends JavaPlugin implements Listener {
         metrics.addCustomChart(new Metrics.SimplePie("script_count", () -> String.format("%s", scriptsFolder.listFiles().length)));
 	}
 	public void onEnable() {
+		log = this.getLogger();
 		instance = this;
 		dataFolder = getDataFolder();
 		scriptsFolder = new File(
 			Paths.get(dataFolder.getAbsolutePath(), "scripts").toString()
 		);
 		modulesFolder = new File(
-			Paths.get(dataFolder.getAbsolutePath(), "node_modules").toString()
+			Paths.get(dataFolder.getAbsolutePath(), "modules").toString()
+		);
+		libFolder = new File(
+			Paths.get(dataFolder.getAbsolutePath(), "lib").toString()
 		);
 		if (!dataFolder.exists()) dataFolder.mkdir();
 		if (!scriptsFolder.exists()) scriptsFolder.mkdir();
 		if (!modulesFolder.exists()) modulesFolder.mkdir();
+		if (!libFolder.exists()) libFolder.mkdir();
 		
 		String[] files = {
 			/*=========================
@@ -168,7 +190,7 @@ public class Velt extends JavaPlugin implements Listener {
 			"core/http.js",
 			"core/https.js",
 			"core/os.js",
-			"core/paths.js",
+			"core/path.js",
 			"core/process.js",
 			"core/punycode.js",
 			"core/querystring.js",
@@ -197,10 +219,63 @@ public class Velt extends JavaPlugin implements Listener {
 		
 		List<String> classpath = new ArrayList<String>();
 		
+		load();
+		
+		loadBStats();
+	}
+	public void reload() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchFieldException {
+		Velt velt = this;
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				try {
+					velt.stop();
+				} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException
+						| InvocationTargetException | NoSuchFieldException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				new BukkitRunnable() {
+					@Override
+					public void run() {
+						velt.load();
+					}
+				}.runTaskLater(velt, 2);
+			}
+		}.runTaskLater(this, 3);
+	}
+	public void stop() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchFieldException {
+		Events.getInstance().clearConsumers();
+		for (VeltCommand command : Utils.commands) {
+			command.unregister(Utils.getCommandMap());
+		}
+		Utils.commands.clear();
+		Server server = Bukkit.getServer();
+		Class<? extends Server> serverClass = server.getClass();
+		Method syncCommands = serverClass.getDeclaredMethod("syncCommands");
+		syncCommands.setAccessible(true);
+		syncCommands.invoke(server);
+		for (BukkitTask task : Bukkit.getScheduler().getPendingTasks()) {
+			if (task.getOwner() == this) { 
+				task.cancel();
+			}
+		}
+		context.close();
+	}
+	public void load() {
 		new BukkitRunnable() {
 			public void run() {
 				Utils.runInPluginContext(() -> {
+					context = ContextCreation.createContext();
+					context.getBindings("js").putMember("__context", context);
+					String loaderPath = String.join(File.separator, dataFolder.getAbsolutePath(), "modules", "velt-loader", "index.js")
+						.trim();
+					loaderPath = Utils.escape(loaderPath);
+					log.info("Loading scripts");
+					context.eval(fromString("load('" + loaderPath + "')", "velt-loader.js"));
+					context.eval(fromString("require('globals')", "globals.js"));
 					for (File file : scriptsFolder.listFiles()) {
+						String path = file.getAbsolutePath();
 						String fileName = file.getPath();
 						boolean hasExtension = false;
 						for (String extension : extensions) {
@@ -212,22 +287,13 @@ public class Velt extends JavaPlugin implements Listener {
 						if (!hasExtension) {
 							continue;
 						}
-						Context context = ContextCreation.createContext();
-						String path = file.getAbsolutePath();
-						String loaderPath = String.join(File.separator, dataFolder.getAbsolutePath(), "node_modules", "velt-loader", "index.js")
-							.trim();
-						loaderPath = Utils.escape(loaderPath);
-						System.out.println("Preparing run.");
-						context.eval(fromString("load('" + loaderPath + "')", "velt-loader.js"));
-						context.eval(fromString("require('globals')", "globals.js"));
+						log.info(String.format("Loading script: %s", file.getName()));
 						String absPath = Utils.escape(file.getAbsolutePath().trim());
 						context.eval(fromString("require('" + absPath + "')", path));
 					}
 				});
 			}
 		}.runTaskLater(this, 0);
-		
-		loadBStats();
 	}
 	public static Source fromString(String string, String path) {
 		return Source.newBuilder("js", string, path).buildLiteral();

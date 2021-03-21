@@ -69,9 +69,12 @@ require = (function() {
 			} else {
 				const name = new File(this.filename).getName();
 				try {
-					const func = new Function('exports', 'module', 'require', '__filename', '__dirname', this.body);
+					/**const func = new Function('exports', 'module', 'require', '__filename', '__dirname', this.body);
 					Object.defineProperty(func, 'name', {value: name, configurable: true});
-					func.apply(module, [ module.exports, module, id => require(id, module), module.filename, module.path ]);
+					func.apply(module, [ module.exports, module, id => require(id, module), module.filename, module.path ]);*/
+					const source = `(function(exports, module, require, __filename, __dirname) { ${this.body} })`;
+					const evaluated = __context.eval(Velt.fromString(source, module.filename));
+					evaluated.apply(module, [ module.exports, module, id => require(id, module), module.filename, module.path ]);
 				} catch (e) {
 					console.error(`Error in ${this.filename}`);
 					console.error(e);
@@ -87,8 +90,7 @@ require = (function() {
 		 * Support Exists for:
 		 * - Local JS modules
 		 * - Absolute JS modules
-		 * - Velt node_modules
-		 * Add Support For:
+		 * - Velt modules
 		 * - JSON Modules
 		 * - Using require on directories
 		 */
@@ -105,8 +107,8 @@ require = (function() {
 		
 		if (!fileExists(filename)) { //Resolve as a node module, either a core or regular module
 			if (level == 0) {
-				const modules = Paths.get(Velt.getInstance().getDataFolder().getAbsolutePath().toString(), "node_modules", id).toString();
-				const coreModules = Paths.get(Velt.getInstance().getDataFolder().getAbsolutePath().toString(), "node_modules", "core", id).toString();
+				const modules = Paths.get(Velt.getInstance().getDataFolder().getAbsolutePath().toString(), "modules", id).toString();
+				const coreModules = Paths.get(Velt.getInstance().getDataFolder().getAbsolutePath().toString(), "modules", "core", id).toString();
 				let res = require(modules, parent, 1);
 				if (res === Failure) res = require(coreModules, parent, 1);
 				return res;

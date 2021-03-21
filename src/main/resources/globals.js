@@ -15,7 +15,10 @@ Java.package = package => {
 		cls = undefined;
 	}
 	if (cls) return cls;
-	return new Proxy({}, {
+	const func = () => {
+		throw new Error(`No class or package of package ${package} was found with Java.package`);
+	};
+	return new Proxy(func, {
 		get(target, prop, receiver) {
 			return Java.package(`${package}.${prop}`);
 		}
@@ -26,6 +29,16 @@ Java.pkg = Java.package;
 
 const { Arrays } = Java.pkg('java.util');
 const { File } = Java.pkg('java.io');
+const { Velt } = Java.pkg('xyz.corman.velt');
+
+const lib = Velt.getInstance().getLibFolder();
+const files = lib.listFiles();
+
+Arrays.asList(files).forEach(file => {
+	if (!file.isFile()) return;
+	if (!file.getName().endsWith('.jar')) return;
+	Java.addToClasspath(file.getAbsolutePath());
+});
 
 global.setInterval = setInterval;
 global.setTimeout = setTimeout;

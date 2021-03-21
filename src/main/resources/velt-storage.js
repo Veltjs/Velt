@@ -43,7 +43,7 @@ function serialize(obj) {
 			type: 'map',
 			value: map
 		};
-	} else if (isJavaInstance(obj, Location)) {
+	} else if (obj instanceof Location) {
 		return {
 			type: 'location',
 			value: {
@@ -55,17 +55,17 @@ function serialize(obj) {
 				world: serialize(obj.getWorld())
 			}
 		};
-	} else if (isJavaInstance(obj, World)) {
+	} else if (obj instanceof World) {
 		return {
 			type: 'world',
 			value: obj.getName()
 		};
-	} else if (isJavaInstance(obj, Entity)) {
+	} else if (obj instanceof Entity) {
 		return {
 			type: 'entity',
 			value: obj.getUniqueId().toString()
 		};
-	} else if (isJavaInstance(obj, Vector)) {
+	} else if (obj instanceof Vector) {
 		return {
 			type: 'vector',
 			value: {
@@ -74,7 +74,7 @@ function serialize(obj) {
 				z: obj.getZ()
 			}
 		};
-	} else if (isJavaInstance(obj, ItemStack)) {
+	} else if (obj instanceof ItemStack) {
 		const bytes = obj.serializeAsBytes();
 		return {
 			type: 'itemstack',
@@ -169,6 +169,12 @@ class Item {
 	field(name, ...args) {
 		return this.item(name, ...args);
 	}
+	setItem(name, val) {
+		return this.item(name).set(val);
+	}
+	getItem(name) {
+		return this.item(name).get();
+	}
 	find(cond) {
 		let ind = 0;
 		const val = this.get();
@@ -221,6 +227,13 @@ class Item {
 			return val.evaluate();
 		}
 		return val;
+	}
+	list() {
+		const val = this.get();
+		if (Array.isArray(val)) {
+			return val;
+		}
+		return Object.keys(val);
 	}
 	add(num) {
 		return this.set(this.get() + num);

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.ArrayList;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -27,11 +28,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.util.Vector;
+import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 
 import xyz.corman.velt.Velt.ContextCallback;
 
 public class Utils {
+	static List<VeltCommand> commands  = new ArrayList<>();;
+	
 	public static String readFile(String path, String encoding) throws IOException {
 		Scanner scanner = new Scanner(new File(path), encoding);
 		String result = scanner.useDelimiter("\\A").next();
@@ -79,7 +83,9 @@ public class Utils {
 		e.printStackTrace();
 	}
 	public static VeltCommand makeVeltCommand(String label, String name, List<String> aliases, String description, String usage, CommandExecute executor, TabExecute tabExecutor, Plugin plugin) {
-		return new VeltCommand(label, name, aliases, description, usage, executor, tabExecutor, plugin);
+		VeltCommand command = new VeltCommand(label, name, aliases, description, usage, executor, tabExecutor, plugin);
+		commands.add(command);
+		return command;
 	}
 	public static CommandMap getCommandMap() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchFieldException {
 		Field commandMapField = SimplePluginManager.class.getDeclaredField("commandMap");
@@ -131,6 +137,9 @@ public class Utils {
 	public static String toAbsolutePath(String maybeRelative) {
 		return toAbsolutePath(maybeRelative, Paths.get(""));
 	}
+	public static String toAbsolutePath(String maybeRelative, String base) {
+		return toAbsolutePath(maybeRelative, Paths.get(base));
+	}
 	public static String toAbsolutePath(String maybeRelative, Path base) {
 	    Path path = Paths.get(maybeRelative);
 	    Path effectivePath = path;
@@ -138,5 +147,8 @@ public class Utils {
 	        effectivePath = base.resolve(path).toAbsolutePath();
 	    }
 	    return effectivePath.normalize().toString();
+	}
+	public static Value getBindings(Context context) {
+		return context.getBindings("js");
 	}
 }
