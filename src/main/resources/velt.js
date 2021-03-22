@@ -787,12 +787,16 @@ commands.create('velt', {
         info: () => infoMsg,
         help: () => infoMsg,
         reload: () => c`&5&lVelt &8| &b/velt reload &fis not yet implemented.`,
-        eval: (sender, ...args) => {
+        eval(sender, ...args) {
 		if (!sender.hasPermission("velt.eval")) return;
 		const evaluate = args.join(' ');
 		sender.sendMessage(c`&5&lVelt &8| &b${evaluate}`)
-		try { sender.sendMessage(`${eval(evaluate)}`) } 
-		catch(error) { sender.sendMessage(c(`&c${error}`)) }
+		try { 
+			sender.sendMessage(`${eval(evaluate)}`) 
+		} 
+		catch (error) { 
+			sender.sendMessage(c(`&c${error}`))
+		}
         }
     },
     run: () => infoMsg
