@@ -778,6 +778,7 @@ const infoMsg = c`
 &8-----------
 &b/velt &8| &b/velt info &8| &b/velt help &8| &fGet info on how to use Velt
 &b/velt reload &8| &fReload all of your Velt scripts
+&b/velt eval &8| &fRun JavaScript ingame
 &8-----------`;
 
 
@@ -785,7 +786,14 @@ commands.create('velt', {
     subs: {
         info: () => infoMsg,
         help: () => infoMsg,
-        reload: () => c`&5&lVelt &8| &b/velt reload &fis not yet implemented.`
+        reload: () => c`&5&lVelt &8| &b/velt reload &fis not yet implemented.`,
+        eval: (sender, ...args) => {
+		if (!sender.hasPermission("velt.eval")) return;
+		const evaluate = args.join(' ');
+		sender.sendMessage(c`&5&lVelt &8| &b${evaluate}`)
+		try { sender.sendMessage(`${eval(evaluate)}`) } 
+		catch(error) { sender.sendMessage(c(`&c${error}`)) }
+        }
     },
     run: () => infoMsg
 });
