@@ -71,13 +71,6 @@ const events = {
 	waiting: {},
 	callbacks: {},
 	anyEvent: Symbol('anyEvent'),
-	broadcast(msg, permission = undefined) {
-		if (permission !== undefined) {
-			Bukkit.broadcast(msg, permission);
-		} else {
-			Bukkit.broadcastMessage(msg);
-		}
-	},
 	on(event, callback) {
 		if (Array.isArray(event)) {
 			const events = event.forEach(ev => this.on(ev, callback));
@@ -348,6 +341,13 @@ const commands = {
 };
 
 const server = {
+	broadcast(msg, permission = undefined) {
+		if (permission !== undefined) {
+			Bukkit.broadcast(msg, permission);
+		} else {
+			Bukkit.broadcastMessage(msg);
+		}
+	},
 	format(text) {
 		return text
 			.toUpperCase()
