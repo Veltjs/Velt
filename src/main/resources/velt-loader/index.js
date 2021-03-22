@@ -90,7 +90,7 @@ require = (function() {
 		 * Support Exists for:
 		 * - Local JS modules
 		 * - Absolute JS modules
-		 * - Velt modules
+		 * - Velt node_modules
 		 * - JSON Modules
 		 * - Using require on directories
 		 */
@@ -107,8 +107,8 @@ require = (function() {
 		
 		if (!fileExists(filename)) { //Resolve as a node module, either a core or regular module
 			if (level == 0) {
-				const modules = Paths.get(Velt.getInstance().getDataFolder().getAbsolutePath().toString(), "modules", id).toString();
-				const coreModules = Paths.get(Velt.getInstance().getDataFolder().getAbsolutePath().toString(), "modules", "core", id).toString();
+				const modules = Paths.get(Velt.getInstance().getDataFolder().getAbsolutePath().toString(), "node_modules", id).toString();
+				const coreModules = Paths.get(Velt.getInstance().getDataFolder().getAbsolutePath().toString(), "node_modules", "core", id).toString();
 				let res = require(modules, parent, 1);
 				if (res === Failure) res = require(coreModules, parent, 1);
 				return res;

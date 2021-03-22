@@ -1,4 +1,4 @@
-const { server, cast, internals: { capitalize, javaArrToJSArr, JSArrToJavaArr, JSArrToJavaList } } = require('velt');
+const { server, events, cast, internals: { capitalize, javaArrToJSArr, JSArrToJavaArr, JSArrToJavaList } } = require('velt');
 const Utils = Java.type('xyz.corman.velt.Utils');
 const { Bukkit, Location } = Java.pkg('org.bukkit');
 const PotionEffectType = Java.type('org.bukkit.potion.PotionEffectType');
@@ -164,14 +164,9 @@ class Gui {
 	}
 	show(...players) {
 		players.forEach(player => {
+			player.closeInventory();
 			player.openInventory(this.inv);
 		});
-		return this;
-	}
-	clear() {
-		this.inv.clear();
-		this.callbacks = {};
-		this.movable = {};
 		return this;
 	}
 }
@@ -180,7 +175,7 @@ Gui.prototype.format = Gui.prototype.set;
 Gui.prototype.unformat = Gui.prototype.unset;
 Gui.prototype.open = Gui.prototype.show;
 
-server.on('InventoryClickEvent', event => {
+events.on('InventoryClickEvent', event => {
 	let clickedInv = event.getClickedInventory();
 	let slot = event.getSlot();
 	guis.forEach(gui => {
@@ -453,14 +448,14 @@ class Item {
         }
         this.itemstack = server.itemstack(item);
         if (opts.interact) {
-            server.on('PlayerInteractEvent', event => {
+            events.on('PlayerInteractEvent', event => {
             	const item = event.getItem();
                 if (!item) return; 
                 if (!item.isSimilar(this.itemstack)) return;
                 opts.interact(event);
             });
         } else if (opts.attack) {
-            server.on('EntityDamageByEntityEvent', event => {
+            events.on('EntityDamageByEntityEvent', event => {
                 const player = event.getDamager();
                 if (!(player instanceof Player)) {
                     return;

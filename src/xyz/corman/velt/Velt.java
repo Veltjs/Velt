@@ -94,7 +94,7 @@ public class Velt extends JavaPlugin implements Listener {
 			Paths.get(dataFolder.getAbsolutePath(), "scripts").toString()
 		);
 		modulesFolder = new File(
-			Paths.get(dataFolder.getAbsolutePath(), "modules").toString()
+			Paths.get(dataFolder.getAbsolutePath(), "node_modules").toString()
 		);
 		libFolder = new File(
 			Paths.get(dataFolder.getAbsolutePath(), "lib").toString()
@@ -284,7 +284,7 @@ public class Velt extends JavaPlugin implements Listener {
 								break;
 							}
 						}
-						if (!hasExtension) {
+						if (!hasExtension && !file.isDirectory()) {
 							continue;
 						}
 						log.info(String.format("Loading script: %s", file.getName()));

@@ -1,0 +1,10 @@
+.git/
+.idea/
+.settings/
+doc/
+lib/
+target/
+.classpath
+.gitconfig
+.project
+dependency-reduced-pom.xml

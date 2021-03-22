@@ -189,6 +189,12 @@ const commands = {
 			}
 		}
 		if (current != null) {
+			if (current.playerOnly && commands.isConsole(sender)) {
+				if (typeof current.playerOnly === 'string') {
+					sender.sendMessage(current.playerOnly);
+				}
+				return true;hiu
+			}
 			if (current.permission && !sender.hasPermission(current.permission)) {
 				if (current.permissionMessage) {
 					sender.sendMessage(current.permissionMessage);
@@ -249,6 +255,10 @@ const commands = {
 						return p;
 					}, {a: ['']}).a
 			} = args[0];
+			
+			if (argParser == null) {
+				argParser = str => str.split(' ');
+			}
 			
 			if (name === undefined) {
 				name = run.name;
@@ -778,15 +788,26 @@ const infoMsg = c`
 &8-----------
 &b/velt &8| &b/velt info &8| &b/velt help &8| &fGet info on how to use Velt
 &b/velt reload &8| &fReload all of your Velt scripts
+&b/velt eval &8| &fEvaluate JavaScript code in-game
 &8-----------`;
 
 
 commands.create('velt', {
+	argParser: null,
     subs: {
         info: () => infoMsg,
         help: () => infoMsg,
-        reload: () => c`&5&lVelt &8| &b/velt reload &fis not yet implemented.`
-    },
+        reload: () => c`&5&lVelt &8| &b/velt reload &fis not yet implemented.`,
+        eval(sender, ...args) {
+    		if (!sender.hasPermission('velt.eval')) return;
+    		const evaluate = args.join(' ');
+    		sender.sendMessage(c`&5&lVelt &8| &b${evaluate}`)
+    		try { 
+    			sender.sendMessage(`${eval(evaluate)}`) 
+    		} catch(err) { 
+    			sender.sendMessage(c(`&c${err}`)) 
+    		}
+        }
     run: () => infoMsg
 });
 
