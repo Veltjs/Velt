@@ -268,7 +268,7 @@ public class Velt extends JavaPlugin implements Listener {
 				Utils.runInPluginContext(() -> {
 					context = ContextCreation.createContext();
 					context.getBindings("js").putMember("__context", context);
-					String loaderPath = String.join(File.separator, dataFolder.getAbsolutePath(), "modules", "velt-loader", "index.js")
+					String loaderPath = String.join(File.separator, dataFolder.getAbsolutePath(), "node_modules", "velt-loader", "index.js")
 						.trim();
 					loaderPath = Utils.escape(loaderPath);
 					log.info("Loading scripts");
