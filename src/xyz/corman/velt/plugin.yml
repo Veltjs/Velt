@@ -1,6 +1,0 @@
-main: xyz.corman.velt.Velt
-name: Velt
-version: 0.1.1-alpha
-author: Corman
-description: Interact with Spigot using JavaScript
-commands: {}
