@@ -1,31 +1,17 @@
-const { CommandExecutor, defaults: { BukkitCommand }, SimpleCommandMap} = Java.pkg('org.bukkit.command');
-let TabExecutor;
-try {
-	TabCompleter = Java.type('org.bukkit.command.TabCompleter');
-} catch {
-	TabCompleter = undefined;
-}
-const { Vector, BlockIterator } = Java.pkg('org.bukkit.util');
+const { Vector } = Java.pkg('org.bukkit.util');
 const { Bukkit, ChatColor, Location , Material, World } = Java.pkg('org.bukkit');
-const ProjectileSource = Java.type('org.bukkit.projectiles.ProjectileSource');
 const { ItemStack, ItemFlag } = Java.pkg('org.bukkit.inventory');
-const PotionEffectType = Java.type('org.bukkit.potion.PotionEffectType');
 const BukkitRunnable = Java.type('org.bukkit.scheduler.BukkitRunnable');
 const { EntityType, Entity, Player, Projectile, LivingEntity } = Java.pkg('org.bukkit.entity');
 const { Enchantment } = Java.pkg('org.bukkit.enchantments');
 
 const { Paths } = Java.pkg('java.nio.file');
 
-const String = Java.type('java.lang.String');
-
 const { Events, Utils } = Java.pkg('xyz.corman.velt');
 
 const { ArrayList, Arrays, UUID } = Java.pkg('java.util');
-const Collectors = Java.type('java.util.stream.Collectors');
 
 const Velt = Java.type('xyz.corman.velt.Velt');
-
-const util = require('util');
 
 const plugin = Velt.getInstance();
 let eventsInst = Events.getInstance();
@@ -795,19 +781,20 @@ const infoMsg = c`
 commands.create('velt', {
 	argParser: null,
     subs: {
-        info: () => infoMsg,
-        help: () => infoMsg,
-        reload: () => c`&5&lVelt &8| &b/velt reload &fis not yet implemented.`,
-        eval(sender, ...args) {
-    		if (!sender.hasPermission('velt.eval')) return;
-    		const evaluate = args.join(' ');
-    		sender.sendMessage(c`&5&lVelt &8| &b${evaluate}`)
-    		try { 
-    			sender.sendMessage(`${eval(evaluate)}`) 
-    		} catch(err) { 
-    			sender.sendMessage(c(`&c${err}`)) 
-    		}
-        }
+		info: () => infoMsg,
+		help: () => infoMsg,
+		reload: () => c`&5&lVelt &8| &b/velt reload &fis not yet implemented.`,
+		eval(sender, ...args) {
+			if (!sender.hasPermission('velt.eval')) return;
+			const evaluate = args.join(' ');
+			sender.sendMessage(c`&5&lVelt &8| &b${evaluate}`)
+			try {
+				sender.sendMessage(`${eval(evaluate)}`)
+			} catch (err) {
+				sender.sendMessage(c(`&c${err}`))
+			}
+		}
+	},
     run: () => infoMsg
 });
 

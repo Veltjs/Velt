@@ -4,28 +4,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.HostAccess;
 
 public class ContextCreation {
 	public static void graalJSRequire(String moduleFolder, Map<String, String> options) {
 		// Enable CommonJS experimental support.
-		options.put("js.commonjs-require", "true");
+		//options.put("js.commonjs-require", "true");
 		// (optional) folder where the Npm modules to be loaded are located.
-		options.put("js.commonjs-require-cwd", moduleFolder);
+		//options.put("js.commonjs-require-cwd", moduleFolder);
 		// (optional) initialization script to pre-define globals.
-		options.put("js.commonjs-global-properties", "globals");
+		//options.put("js.commonjs-global-properties", "globals");
 		// (optional) Java jars as a comma separated list.
 		//options.put("jvm.classpath", classpath.stream().collect(Collectors.joining(",")));
 		// (optional) Node.js built-in replacements as a comma separated list.
-		options.put(
+		/*options.put(
 			"js.commonjs-core-modules-replacements",
 			"timers:core/intervals,fs:core/filesystem,events:core/emitter,path:core/paths,domain:core/domains,os:core/osmod,punycode:core/punycodes,"
 			+ "tty:core/ttymod,assert:core/assertions,buffer:core/buffers,util:core/utils,querystring:core/querystrings,"
 			+ "string_decoder:core/string_decode,url:core/urls,console:core/consolemod,http:core/httpmod,https:core/httpsmod,"
 			+ "stream:core/streams,zlib:browserify-zlib,process:core/process"
-		);
+		);*/
 		/*options.put(
 			"js.commonjs-core-modules-replacements",
 			"timers:lib/timers,fs:lib/fs,events:lib/events,path:lib/path,domain:lib/domain,os:lib/os,punycode:lib/punycode,tty:lib/tty,assert:lib/assert," +
