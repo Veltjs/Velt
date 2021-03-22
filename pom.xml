@@ -59,6 +59,10 @@
 		</dependency>
 	</dependencies>
 	<build>
+		<directory>${project.basedir}/target</directory>
+		<outputDirectory>${project.build.directory}/classes</outputDirectory>
+		<testOutputDirectory>${project.build.directory}/test-classes</testOutputDirectory>
+		<sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
