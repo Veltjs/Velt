@@ -1,6 +1,6 @@
 // velt-helpers.js
 /**
- * This is the documentation for the `velt-helpers` module.
+ * This is the documentation for the `velt/helpers` module.
  * The `velt-helpers` module contains functionality that isn't necessarily part of Velt's core, but is generally still very useful when you need it.
  * It contains one export with plenty of different utility functions and classes.
  * 

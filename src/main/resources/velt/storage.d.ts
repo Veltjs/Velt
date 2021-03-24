@@ -1,17 +1,27 @@
 // velt-storage.js
 /**
- * This is the documentation for the `velt-storage` module.
+ * This is the documentation for the `velt/storage` module.
  * It handles everything to do with storage across restarts, like serialization, deserialization, etc.
  * It exports one object with one property, `Storage`, which is quite a handy, useful, and easy API to use to store data across restarts.
- * 
+ *
  * @module
-*/
+ */
 
 /**
  * Options for getting items
  */
 interface ItemOpts<T> {
     default?: T;
+}
+
+export interface Serializer {
+    serialize(obj: any): any;
+    deserialize(obj: any): any;
+}
+
+export interface Parser {
+    load(text: string): any;
+    dump(obj: any): string;
 }
 
 type ValueOf<T> = T[keyof T];
@@ -31,15 +41,15 @@ export class Item<T> {
      */
     field<U extends keyof T>(index: ValueOf<T>, opts?: ItemOpts<T[U]>): Field<T[U]>;
     /**
-      * Set a field of this `Item` to a value.
-      * @param index The field to be set
-      * @param val The value for the field to be set as
-    **/
+     * Set a field of this `Item` to a value.
+     * @param index The field to be set
+     * @param val The value for the field to be set as
+     **/
     setItem<U extends keyof T>(index: keyof T, val: T[U]): Field<T[U]>;
     /**
-      * Get the value of the given field of this `Item`.
-      * @param index The field to get
-    */
+     * Get the value of the given field of this `Item`.
+     * @param index The field to get
+     */
     getItem<U extends keyof T>(index: keyof T): T[U];
     /**
      * *This only works for items with their value as an array*
@@ -79,7 +89,7 @@ export class Item<T> {
     pop(val: keyof T): T;
     /**
      * If there is no value for this `Item` already, and the `val` isn't `null` or `undefined` or anything either, set the value to the `val`.
-     * @param val 
+     * @param val
      */
     setDefault<T>(val: T): this;
     /**
@@ -87,9 +97,9 @@ export class Item<T> {
      */
     get<T>(): T;
     /**
-      * List all of the items in this `Item`. 
-      * If the value is an an array, returns the value, otherwise, it returns the keys of the value.
-    */ 
+     * List all of the items in this `Item`.
+     * If the value is an an array, returns the value, otherwise, it returns the keys of the value.
+     */
     list<T>(): (ValueOf<T>)[] | (keyof T)[];
     /**
      * *This only works for items with a number*
@@ -146,6 +156,23 @@ export class Field<T> extends Item<T> {
     set(value: T): this;
 }
 
-export const storage: { Storage: typeof Storage };
+export interface Serializers {
+    advancedSerializer: Serializer,
+    simpleSerializer: Serializer
+}
+
+export interface Parsers {
+    JSONParser: Parser,
+    YAMLParser: Parser
+}
+
+export const serializers: Serializers;
+export const parsers: Parsers;
+
+export const storage: {
+    Storage: typeof Storage,
+    serializers: Serializers,
+    parsers: Parsers
+};
 
 export default storage;

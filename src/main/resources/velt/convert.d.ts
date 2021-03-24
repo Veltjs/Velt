@@ -1,6 +1,6 @@
 // velt-convert.js
 /**
- * This is the documentation for the `velt-convert` module.
+ * This is the documentation for the `velt/convert` module.
  * This module has a more specific use-case then the others, but is still quite useful.
  * In cases where you want to supply Java or Spigot methods with Java arrays or lists, `velt-convert` may be useful.
  * Less commonly, if you need to supply some Java method with a JS object (for options for example), then `velt-convert` is the right option to do that.
