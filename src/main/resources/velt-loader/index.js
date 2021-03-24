@@ -12,6 +12,16 @@ require = (function() {
 		const file = new File(path);
 		return file.exists() && file.isDirectory();
 	}
+
+	const cleanString = input => {
+		var output = "";
+		for (let i = 0; i < input.length; i++ || input.charCodeAt(i) >= 160 && input.charCodeAt(i) <= 255) {
+			if (input.charCodeAt(i) <= 127) {
+				output += input.charAt(i);
+			}
+		}
+		return output;
+	};
 	
 	const cache = {};
 
@@ -55,7 +65,7 @@ require = (function() {
 			this.module = new Module(this.id, this.filename);
 		}
 		load() {
-			this.body = readFile(this.filename);
+			this.body = cleanString(readFile(this.filename));
 			this.loaded = true;
 			return this;
 		}
@@ -72,7 +82,7 @@ require = (function() {
 					/**const func = new Function('exports', 'module', 'require', '__filename', '__dirname', this.body);
 					Object.defineProperty(func, 'name', {value: name, configurable: true});
 					func.apply(module, [ module.exports, module, id => require(id, module), module.filename, module.path ]);*/
-					const source = `(function(exports, module, require, __filename, __dirname) { ${this.body} })`;
+					const source = `(function(exports, module, require, __filename, __dirname) {${this.body}})`;
 					const evaluated = __context.eval(Velt.fromString(source, module.filename));
 					evaluated.apply(module, [ module.exports, module, id => require(id, module), module.filename, module.path ]);
 				} catch (e) {
@@ -96,7 +106,7 @@ require = (function() {
 		 */
 		
 		let filename = Utils.toAbsolutePath(id, (parent && parent.path && Paths.get(parent.path)) || Paths.get(""));
-		
+
 		if (!fileExists(filename)) { //Add in JS or JSON extension
 			if (fileExists(`${filename}.js`)) {
 				filename = `${filename}.js`;

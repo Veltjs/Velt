@@ -15,24 +15,22 @@
 		<dependency>
 			<groupId>io.github.classgraph</groupId>
 			<artifactId>classgraph</artifactId>
-			<version>4.8.54</version>
+			<version>4.8.103</version>
 			<scope>compile</scope>
 			<type>jar</type>
 		</dependency>
-	
+
 		<!-- https://mvnrepository.com/artifact/com.ibm.icu/icu4j -->
 		<dependency>
 			<groupId>com.ibm.icu</groupId>
 			<artifactId>icu4j</artifactId>
-			<version>4.8</version>
-			<scope>compile</scope>
-			<type>jar</type>
+			<version>68.2</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.graalvm.sdk/graal-sdk -->
 		<dependency>
 			<groupId>org.graalvm.sdk</groupId>
 			<artifactId>graal-sdk</artifactId>
-			<version>20.1.0</version>
+			<version>21.0.0.2</version>
 			<scope>compile</scope>
 			<type>jar</type>
 		</dependency>
@@ -40,24 +38,24 @@
 		<dependency>
 			<groupId>org.graalvm.js</groupId>
 			<artifactId>js</artifactId>
-			<version>20.1.0</version>
+			<version>21.0.0.2</version>
 			<scope>compile</scope>
 			<type>jar</type>
 		</dependency>
 		<dependency>
 			<groupId>org.graalvm.truffle</groupId>
 			<artifactId>truffle-api</artifactId>
-			<version>20.1.0</version>
+			<version>21.0.0.2</version>
 			<scope>compile</scope>
 			<type>jar</type>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.yaml/snakeyaml -->
-		<dependency>
+		<!-- <dependency>
 			<groupId>org.yaml</groupId>
 			<artifactId>snakeyaml</artifactId>
 			<version>1.28</version>
-		</dependency>
+		</dependency> -->
 
 	</dependencies>
 	<build>

@@ -38,6 +38,10 @@ public class VeltCommand extends BukkitCommand {
 		if (this.getPermission() != null && !sender.hasPermission(this.getPermission())) {
 			return empty;
 		}
-		return this.tabExecutor.execute(sender, alias, args);
+		try {
+			return this.tabExecutor.execute(sender, alias, args);
+		} catch (Exception err) {
+			return new ArrayList<>();
+		}
 	}
 }

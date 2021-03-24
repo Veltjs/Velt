@@ -10,22 +10,17 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: org.spigotmc:spigot-api:1.14.4-R0.1-SNAPSHOT" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: commons-lang:commons-lang:2.6" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.google.guava:guava:21.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: com.google.code.gson:gson:2.8.0" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: net.md-5:bungeecord-chat:1.13-SNAPSHOT" level="project" />
-    <orderEntry type="library" name="Maven: io.github.classgraph:classgraph:4.8.54" level="project" />
-    <orderEntry type="library" name="Maven: com.ibm.icu:icu4j:4.8" level="project" />
-    <orderEntry type="library" name="Maven: org.graalvm.sdk:graal-sdk:20.1.0" level="project" />
-    <orderEntry type="library" name="Maven: org.graalvm.js:js:20.1.0" level="project" />
-    <orderEntry type="library" name="Maven: org.graalvm.regex:regex:20.1.0" level="project" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm:7.1" level="project" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm-tree:7.1" level="project" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm-analysis:7.1" level="project" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm-commons:7.1" level="project" />
-    <orderEntry type="library" name="Maven: org.ow2.asm:asm-util:7.1" level="project" />
-    <orderEntry type="library" name="Maven: org.graalvm.truffle:truffle-api:20.1.0" level="project" />
-    <orderEntry type="library" name="Maven: org.yaml:snakeyaml:1.28" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: net.md-5:bungeecord-chat:1.16-R0.4" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.yaml:snakeyaml:1.27" level="project" />
+    <orderEntry type="library" name="Maven: io.github.classgraph:classgraph:4.8.103" level="project" />
+    <orderEntry type="library" name="Maven: com.ibm.icu:icu4j:68.2" level="project" />
+    <orderEntry type="library" name="Maven: org.graalvm.sdk:graal-sdk:21.0.0.2" level="project" />
+    <orderEntry type="library" name="Maven: org.graalvm.js:js:21.0.0.2" level="project" />
+    <orderEntry type="library" name="Maven: org.graalvm.regex:regex:21.0.0.2" level="project" />
+    <orderEntry type="library" name="Maven: org.graalvm.truffle:truffle-api:21.0.0.2" level="project" />
   </component>
 </module>

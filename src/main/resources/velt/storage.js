@@ -1,7 +1,8 @@
 const fs = require('fs');
 const util = require('util');
-const { server, cast, utils: { isJavaInstance } } = require('velt');
-const { Inventory } = require('velt-helpers');
+const { server, cast } = require('velt');
+const { Inventory } = require('velt/helpers');
+const yaml = require('velt/yaml');
 
 const { Location, World } = Java.pkg('org.bukkit');
 const { Entity } = Java.pkg('org.bukkit.entity');
@@ -23,118 +24,146 @@ class Unevaluated {
 	}
 }
 
-function serialize(obj) {
-	if (Object(obj) !== obj) {
-		return {
-			type: 'primitive',
-			value: obj
-		};
-	} else if (Array.isArray(obj)) {
-		return {
-			type: 'array',
-			value: obj.map(i => serialize(i))
-		};
-	} else if (Object.getPrototypeOf(obj) === Object.prototype) {
-		const map = {};
-		for (let [key, val] of Object.entries(obj)) {
-			map[key] = serialize(val);
-		}
-		return {
-			type: 'map',
-			value: map
-		};
-	} else if (obj instanceof Location) {
-		return {
-			type: 'location',
-			value: {
-				x: obj.getX(),
-				y: obj.getY(),
-				z: obj.getZ(),
-				yaw: obj.getYaw(),
-				pitch: obj.getPitch(),
-				world: serialize(obj.getWorld())
+const advancedSerializer = {
+	serialize(obj) {
+		if (Object(obj) !== obj) {
+			return {
+				type: 'primitive',
+				value: obj
+			};
+		} else if (Array.isArray(obj)) {
+			return {
+				type: 'array',
+				value: obj.map(i => this.serialize(i))
+			};
+		} else if (Object.getPrototypeOf(obj) === Object.prototype) {
+			const map = {};
+			for (let [key, val] of Object.entries(obj)) {
+				map[key] = this.serialize(val);
 			}
-		};
-	} else if (obj instanceof World) {
-		return {
-			type: 'world',
-			value: obj.getName()
-		};
-	} else if (obj instanceof Entity) {
-		return {
-			type: 'entity',
-			value: obj.getUniqueId().toString()
-		};
-	} else if (obj instanceof Vector) {
-		return {
-			type: 'vector',
-			value: {
-				x: obj.getX(),
-				y: obj.getY(),
-				z: obj.getZ()
+			return {
+				type: 'map',
+				value: map
+			};
+		} else if (obj instanceof Location) {
+			return {
+				type: 'location',
+				value: {
+					x: obj.getX(),
+					y: obj.getY(),
+					z: obj.getZ(),
+					yaw: obj.getYaw(),
+					pitch: obj.getPitch(),
+					world: this.serialize(obj.getWorld())
+				}
+			};
+		} else if (obj instanceof World) {
+			return {
+				type: 'world',
+				value: obj.getName()
+			};
+		} else if (obj instanceof Entity) {
+			return {
+				type: 'entity',
+				value: obj.getUniqueId().toString()
+			};
+		} else if (obj instanceof Vector) {
+			return {
+				type: 'vector',
+				value: {
+					x: obj.getX(),
+					y: obj.getY(),
+					z: obj.getZ()
+				}
+			};
+		} else if (obj instanceof ItemStack) {
+			const bytes = obj.serializeAsBytes();
+			return {
+				type: 'itemstack',
+				value: Base64.getEncoder().encodeToString(bytes)
+			};
+		} else if (obj instanceof Inventory) {
+			const value = {
+				contents: this.serialize(obj.contents)
+			};
+			if (obj.armor) value.armor = this.serialize(obj.armor);
+			return {
+				type: 'inventory',
+				value
 			}
-		};
-	} else if (obj instanceof ItemStack) {
-		const bytes = obj.serializeAsBytes();
-		return {
-			type: 'itemstack',
-			value: Base64.getEncoder().encodeToString(bytes)
-		};
-	} else if (obj instanceof Inventory) {
-		const value = {
-			contents: serialize(obj.contents)
-		};
-		if (obj.armor) value.armor = serialize(obj.armor);
-		return {
-			type: 'inventory',
-			value
 		}
-	} 
+	},
+	deserialize({ type, value }) {
+		if (type == 'primitive') {
+			return value;
+		} else if (type == 'array') {
+			return value.map(i => this.deserialize(i));
+		} else if (type == 'map') {
+			const obj = {};
+			for (let [key, val] of Object.entries(value)) {
+				obj[key] = this.deserialize(val);
+			}
+			return obj;
+		} else if (type == 'location') {
+			return cast.asLocation({
+				...value,
+				world: this.deserialize(value.world)
+			});
+		} else if (type == 'world') {
+			return cast.asWorld(value);
+		} else if (type == 'entity') {
+			return new Unevaluated(() => {
+				for (let world of server.worlds()) {
+					let result;
+					world.getEntities()
+						.stream()
+						.forEach(i => {
+							if (i.getUniqueId().toString() == value) {
+								result = i;
+							}
+						});
+					if (result) {
+						return result;
+					}
+				}
+			});
+		} else if (type == 'vector') {
+			return new Vector(value.x, value.y, value.z);
+		} else if (type == 'itemstack') {
+			const bytes = Base64.getDecoder().decode(Utils.toBytes(value));
+			return ItemStack.deserializeBytes(bytes);
+		} else if (type == 'inventory') {
+			const extra = value.armor ? [ this.deserialize(value.armor) ] : [];
+			const inv = new Inventory(this.deserialize(value.contents), ...extra);
+			return inv;
+		}
+	}
+};
+
+const simpleSerializer = {
+	serialize(obj) {
+		return obj;
+	},
+	deserialize(obj) {
+		return obj;
+	}
 }
 
-function deserialize({ type, value }) {
-	if (type == 'primitive') {
-		return value;
-	} else if (type == 'array') {
-		return value.map(i => deserialize(i));
-	} else if (type == 'map') {
-		const obj = {};
-		for (let [key, val] of Object.entries(value)) {
-			obj[key] = deserialize(val);
-		}
-		return obj;
-	} else if (type == 'location') {
-		return cast.asLocation({
-			...value,
-			world: deserialize(value.world)
-		});
-	} else if (type == 'world') {
-		return cast.asWorld(value);
-	} else if (type == 'entity') {
-		return new Unevaluated(() => {
-			for (let world of server.worlds()) {
-				let result;
-				world.getEntities()
-					.stream()
-					.forEach(i => {
-						if (i.getUniqueId().toString() == value) {
-							result = i;
-						}
-					});
-				if (result) {
-					return result;
-				}
-			}
-		});
-	} else if (type == 'vector') {
-		return new Vector(value.x, value.y, value.z);
-	} else if (type == 'itemstack') {
-		const bytes = Base64.getDecoder().decode(Utils.toBytes(value));
-		return ItemStack.deserializeBytes(bytes);
-	} else if (type == 'inventory') {
-		const extra = value.armor ? [ deserialize(value.armor) ] : [];
-		const inv = new Inventory(deserialize(value.contents), ...extra);
-		return inv;
+const JSONParser = {
+	load(obj) {
+		return JSON.parse(obj);
+	},
+	dump(obj) {
+		return JSON.stringify(obj, null, 2);
+	}
+};
+
+const YAMLParser = {
+	load(obj) {
+		return yaml.parse(obj);
+	},
+	dump(obj) {
+		return yaml.dump(obj);
 	}
 }
 
@@ -156,7 +185,9 @@ function deepClone(obj) {
 
 const defaults = {
 	autoSave: true,
-	autoSaveDelay: { seconds: 10 }
+	autoSaveDelay: { seconds: 10 },
+	serializer: advancedSerializer,
+	parser: JSONParser
 };
 
 const fieldDefaults = {};
@@ -262,11 +293,17 @@ class Storage extends Item {
 	constructor(path, opts = {}) {
 		super();
 		opts = { ...defaults, ...opts };
+		if (opts.serializer) {
+			this.serializer = opts.serializer;
+		}
+		if (opts.parser) {
+			this.parser = opts.parser;
+		}
 		this.path = path;
 		try {
 			const text = fs.readFileSync(path);
-			this.value = JSON.parse(text);
-			const deserialized = deserialize(this.value);
+			this.value = this.parser.load(text);
+			const deserialized = this.serializer.deserialize(this.value);
 			if (deserialized) this.value = deserialized;
 		} catch (e) {
 			console.error(`Could not load storage at ${path}`);
@@ -297,11 +334,12 @@ class Storage extends Item {
 	save(path, callback) {
 		if (callback) return this.save(path).then(callback);
 		if (!path && this.path) path = this.path;
-		return writeFile(path, JSON.stringify(serialize(this.value), null, 2));
+		return writeFile(path, this.parser.dump(this.serializer.serialize(this.value), null, 2));
 	}
-	static createConfig(path, data, opts = defaults) {
+	static createConfig(path, data, opts = {}) {
 		if (!opts.default) opts.default = data;
-		if (!opts.autoSave) opts.autoSave = false;
+		if (!opts.serializer) opts.serializer = simpleSerializer;
+		if (!opts.parser) opts.parser = YAMLParser;
 		return new Storage(path, opts);
 	}
 }
@@ -325,4 +363,14 @@ class Field extends Item {
 	}
 }
 
-module.exports = { Storage };
+const serializers = {
+	advancedSerializer,
+	simpleSerializer
+};
+
+const parsers = {
+	JSONParser,
+	YAMLParser
+}
+
+module.exports = { Storage, serializers, parsers };

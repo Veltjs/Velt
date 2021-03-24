@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.event.Listener;
@@ -34,6 +33,7 @@ public class Velt extends JavaPlugin implements Listener {
 	private File scriptsFolder;
 	private File modulesFolder;
 	private File libFolder;
+	private File scriptDataFolder;
 	Logger log;
 	String[] extensions = new String[] {
 		".js",
@@ -48,6 +48,12 @@ public class Velt extends JavaPlugin implements Listener {
 	
 	public String getScriptsFolder() {
 		return scriptsFolder.getAbsolutePath();
+	}
+	public String getScriptDataFolder() {
+		return scriptDataFolder.getAbsolutePath();
+	}
+	public String getPluginDataFolder() {
+		return getDataFolder().getAbsolutePath();
 	}
 	public File getLibFolder() {
 		return libFolder;
@@ -90,6 +96,8 @@ public class Velt extends JavaPlugin implements Listener {
 		log = this.getLogger();
 		instance = this;
 		dataFolder = getDataFolder();
+		scriptDataFolder = new File(Paths.get(dataFolder.getAbsolutePath(), "data").toString()
+		);
 		scriptsFolder = new File(
 			Paths.get(dataFolder.getAbsolutePath(), "scripts").toString()
 		);
@@ -103,13 +111,14 @@ public class Velt extends JavaPlugin implements Listener {
 		if (!scriptsFolder.exists()) scriptsFolder.mkdir();
 		if (!modulesFolder.exists()) modulesFolder.mkdir();
 		if (!libFolder.exists()) libFolder.mkdir();
+		if (!scriptDataFolder.exists()) scriptDataFolder.mkdir();
 		
 		String[] files = {
 			/*=========================
 			 * MODULE LOADERS
 			 ==========================*/
 
-                "jvm-npm/src/main/javascript/jvm-npm.js",
+			"jvm-npm/src/main/javascript/jvm-npm.js",
 			"velt-loader/index.js",
 				
 			/*=========================
@@ -117,19 +126,25 @@ public class Velt extends JavaPlugin implements Listener {
 			 ==========================*/
 				
 			"globals.js",
-			"velt.js",
-			"velt-helpers.js",
-			"velt-storage.js",
+			"velt/index.js",
+			"velt/helpers.js",
+			"velt/storage.js",
+			"velt/convert.js",
+			"velt/yaml.js",
 			"npm.js",
 			
 			"velt.d.ts",
-			"velt-helpers.d.ts",
-			"velt-storage.d.ts",
+			"velt/helpers.d.ts",
+			"velt/storage.d.ts",
+			"velt/convert.d.ts",
 			
 			/*==============================
 			 * Node module dependencies
 			 =============================*/
-			
+
+			"nearley.js",
+			"js-yaml.js",
+
 			"base64-js.js",
 			"base-64.js",
 			"ieee754.js",
@@ -256,7 +271,7 @@ public class Velt extends JavaPlugin implements Listener {
 		syncCommands.setAccessible(true);
 		syncCommands.invoke(server);
 		for (BukkitTask task : Bukkit.getScheduler().getPendingTasks()) {
-			if (task.getOwner() == this) { 
+			if (task.getOwner() == this) {
 				task.cancel();
 			}
 		}
@@ -268,7 +283,7 @@ public class Velt extends JavaPlugin implements Listener {
 				Utils.runInPluginContext(() -> {
 					context = ContextCreation.createContext();
 					context.getBindings("js").putMember("__context", context);
-					String loaderPath = String.join(File.separator, dataFolder.getAbsolutePath(), "modules", "velt-loader", "index.js")
+					String loaderPath = String.join(File.separator, dataFolder.getAbsolutePath(), "node_modules", "velt-loader", "index.js")
 						.trim();
 					loaderPath = Utils.escape(loaderPath);
 					log.info("Loading scripts");

@@ -5,10 +5,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -18,7 +16,6 @@ import java.util.ArrayList;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.SimpleCommandMap;
@@ -35,7 +32,7 @@ import xyz.corman.velt.Velt.ContextCallback;
 
 public class Utils {
 	static List<VeltCommand> commands  = new ArrayList<>();;
-	
+
 	public static String readFile(String path, String encoding) throws IOException {
 		Scanner scanner = new Scanner(new File(path), encoding);
 		String result = scanner.useDelimiter("\\A").next();
@@ -150,5 +147,8 @@ public class Utils {
 	}
 	public static Value getBindings(Context context) {
 		return context.getBindings("js");
+	}
+	public static <T> T cast(Class<T> cls, Object obj) {
+		return (T) cls.cast(obj);
 	}
 }

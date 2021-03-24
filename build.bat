@@ -1,0 +1,1 @@
+start /affinity 9 mvn clean install -T 5000 -Denforcer.skip=true -DskipTests

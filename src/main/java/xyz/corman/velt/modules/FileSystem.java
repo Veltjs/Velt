@@ -1,15 +1,6 @@
 package xyz.corman.velt.modules;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.function.BiConsumer;
@@ -56,10 +47,20 @@ public class FileSystem {
 	}
 	
 	public static String readFileSync(String name) throws IOException {
-		Charset charset = Charset.forName("UTF-8");
-		try (BufferedReader reader = Files.newBufferedReader(Paths.get(name), charset)) {
-		    return reader.lines().collect(Collectors.joining("\n"));
+		BufferedReader reader = new BufferedReader(new FileReader(name));
+		StringBuilder stringBuilder = new StringBuilder();
+		String line = null;
+		String ls = System.getProperty("line.separator");
+		while ((line = reader.readLine()) != null) {
+			stringBuilder.append(line);
+			stringBuilder.append(ls);
 		}
+		// delete the last new line separator
+		stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+		reader.close();
+
+		String content = stringBuilder.toString();
+		return content;
 	}
 	public static void createFileSync(String name) throws IOException {
 		File file = new File(name);

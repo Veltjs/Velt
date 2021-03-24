@@ -1,4 +1,4 @@
-const { Vector } = Java.pkg('org.bukkit.util');
+﻿const { Vector } = Java.pkg('org.bukkit.util');
 const { Bukkit, ChatColor, Location , Material, World } = Java.pkg('org.bukkit');
 const { ItemStack, ItemFlag } = Java.pkg('org.bukkit.inventory');
 const BukkitRunnable = Java.type('org.bukkit.scheduler.BukkitRunnable');
@@ -11,9 +11,135 @@ const { Events, Utils } = Java.pkg('xyz.corman.velt');
 
 const { ArrayList, Arrays, UUID } = Java.pkg('java.util');
 
-const Velt = Java.type('xyz.corman.velt.Velt');
+const Index = Java.type('xyz.corman.velt.Velt');
 
-const plugin = Velt.getInstance();
+const nearley = require('nearley');
+
+// Generated automatically by nearley, version 2.19.3
+// http://github.com/Hardmath123/nearley
+const grammar = (function () {
+	function id(x) {
+		return x[0];
+	}
+
+	const grammar = {
+		Lexer: undefined,
+		ParserRules: [
+			{ name: "main$ebnf$1", symbols: ["args"], postprocess: id },
+			{
+				name: "main$ebnf$1",
+				symbols: [],
+				postprocess: function (d) {
+					return null;
+				},
+			},
+			{
+				name: "main",
+				symbols: ["cmd", "main$ebnf$1"],
+				postprocess: ([cmd, args]) => ({
+					cmd,
+					args,
+				}),
+			},
+			{ name: "cmd$ebnf$1", symbols: [/[a-zA-Z]/] },
+			{
+				name: "cmd$ebnf$1",
+				symbols: ["cmd$ebnf$1", /[a-zA-Z]/],
+				postprocess: function arrpush(d) {
+					return d[0].concat([d[1]]);
+				},
+			},
+			{
+				name: "cmd",
+				symbols: ["cmd$ebnf$1"],
+				postprocess: (i) => i[0].join(""),
+			},
+			{ name: "type$subexpression$1", symbols: ["simple_type"] },
+			{ name: "type$subexpression$1", symbols: ["optional"] },
+			{ name: "type$subexpression$1", symbols: ["spread"] },
+			{
+				name: "type",
+				symbols: [{ literal: "(" }, "type$subexpression$1", { literal: ")" }],
+				postprocess: (i) => i[1][0],
+			},
+			{ name: "simple_type$ebnf$1", symbols: [/[a-zA-Z]/] },
+			{
+				name: "simple_type$ebnf$1",
+				symbols: ["simple_type$ebnf$1", /[a-zA-Z]/],
+				postprocess: function arrpush(d) {
+					return d[0].concat([d[1]]);
+				},
+			},
+			{
+				name: "simple_type",
+				symbols: ["simple_type$ebnf$1"],
+				postprocess: (i) => ({
+					type: "simple",
+					value: i[0].join(""),
+				}),
+			},
+			{
+				name: "optional",
+				symbols: ["simple_type", { literal: "?" }],
+				postprocess: (i) => ({
+					type: "optional",
+					value: i[0],
+				}),
+			},
+			{
+				name: "spread$string$1",
+				symbols: [{ literal: "." }, { literal: "." }, { literal: "." }],
+				postprocess: function joiner(d) {
+					return d.join("");
+				},
+			},
+			{
+				name: "spread",
+				symbols: ["spread$string$1", "simple_type"],
+				postprocess: (i) => ({
+					type: "spread",
+					value: i[1],
+				}),
+			},
+			{
+				name: "args$ebnf$1$subexpression$1",
+				symbols: [{ literal: " " }, "type"],
+			},
+			{ name: "args$ebnf$1", symbols: ["args$ebnf$1$subexpression$1"] },
+			{
+				name: "args$ebnf$1$subexpression$2",
+				symbols: [{ literal: " " }, "type"],
+			},
+			{
+				name: "args$ebnf$1",
+				symbols: ["args$ebnf$1", "args$ebnf$1$subexpression$2"],
+				postprocess: function arrpush(d) {
+					return d[0].concat([d[1]]);
+				},
+			},
+			{
+				name: "args",
+				symbols: ["args$ebnf$1"],
+				postprocess: (i) => i[0].map((x) => x[1]),
+			},
+		],
+		ParserStart: "main",
+	};
+	return grammar;
+})();
+
+
+const createParser = () => {
+	return new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
+}
+
+const parse = text => {
+	const parser = createParser();
+	parser.feed(text);
+	return parser.results[0];
+}
+
+const plugin = Index.getInstance();
 let eventsInst = Events.getInstance();
 
 const plugins = {
@@ -136,14 +262,93 @@ const events = {
 
 events.waitFor = events.once;
 
+const ending = num => {
+	switch (num) {
+		case 1:
+			return 'st';
+		case 2:
+			return 'nd';
+		case 3:
+			return 'rd';
+		default:
+			return 'th';
+	}
+}
+
 const commands = {
+	types: [],
+	handleType(obj) {
+		if (typeof obj === 'string') {
+			return { type: 'simple', value: obj };
+		}
+		return obj;
+	},
+	createType(...args) {
+		switch (args.length) {
+			case 1:
+				const [ opts ] = args;
+
+				commands.types.push(opts);
+				break;
+			case 2:
+				return this.createType({
+					type: args[0],
+					...args[1]
+				})
+		}
+		return this;
+	},
+	createListType(name, arr) {
+		return this.createType({
+			type: name,
+			tabComplete: () => arr,
+			match: (sender, arg) => arr.toLowerCase().includes(arg.toLowerCase())
+		});
+	},
+	getType(type) {
+		switch (type.type) {
+			case 'simple':
+				return this.types.find(i => {
+					return i.type === type.value;
+				});
+			case 'optional': {
+				const { value } = type;
+				const val = this.findType(value);
+				return {
+					type: `${val.type}?`,
+					tabComplete: val.tabComplete,
+					match: (sender, arg) => arg == null ? null : val.match == null ? null : val.match(sender, arg)
+				};
+			}
+			case 'spread': {
+				const { value } = type;
+				const val = this.findType(value);
+				return {
+					type: `...${val.type}`,
+					tabComplete: val.tabComplete,
+					match(sender, args) {
+						const matched = args.map(arg => val.match(sender, arg));
+						if (matched.some(i => i === undefined)) {
+							return;
+						}
+						return matched;
+					}
+				}
+			}
+		}
+	},
+	findType(type) {
+		const handledType = this.handleType(type);
+		const out = this.getType(handledType);
+		return out;
+	},
 	runCommand(sender, command) {
 		Bukkit.dispatchCommand(sender, command);
 	},
 	runConsoleCommand(command) {
 		this.runCommand(Bukkit.getServer().getConsoleSender(), command);
 	},
-	delegateTab(subs, tab, sender, args) {
+	delegateTab(subs, tab, sender, args, current = null) {
 		args = args ?? [];
 		subs = subs ?? [];
 		if (args == null) {
@@ -153,13 +358,42 @@ const commands = {
 		if (arg != null) {
 			for (const sub of subs) {
 				if (sub.name === arg) {
-					return commands.delegateTab(sub.subs, sub.tabComplete, sender, args.slice(1));
+					return commands.delegateTab(sub.subs, sub.tabComplete, sender, args.slice(1), sub);
 				}
 			}
 		}
+
 		const extras = args.length <= 1 ? subs.map(i => i.name) : [];
+
+		if (current?.args != null) {
+			const index = args.length === 0 ? 0 : args.length - 1;
+			const argType = current.args[index];
+			if (argType) {
+				const arg = this.findType(argType);
+				if (arg.tabComplete) {
+					try {
+						extras.push(...arg.tabComplete(sender, args[index]));
+					} catch (e) {
+						console.error(e);
+					}
+				}
+			} else {
+				const finalType = current.args[current.args.length - 1];
+				if (finalType.type === 'spread') {
+					const arg = this.findType(finalType);
+					if (arg.tabComplete) {
+						try {
+							extras.push(...arg.tabComplete(sender, args[index]));
+						} catch (e) {
+							console.error(e);
+						}
+					}
+				}
+			}
+		}
+
 		if (tab) {
-			return [ ...extras, ...tab(sender, ...args) ];		
+			return [ ...extras, ...tab(sender, ...args) ];
 		} else {
 			return [ ...extras ];
 		}
@@ -174,12 +408,13 @@ const commands = {
 				}
 			}
 		}
+
 		if (current != null) {
 			if (current.playerOnly && commands.isConsole(sender)) {
 				if (typeof current.playerOnly === 'string') {
 					sender.sendMessage(current.playerOnly);
 				}
-				return true;hiu
+				return true;
 			}
 			if (current.permission && !sender.hasPermission(current.permission)) {
 				if (current.permissionMessage) {
@@ -188,8 +423,54 @@ const commands = {
 				return true;
 			}
 		}
+
+		const newArgs = [ ...args ];
+
+		if (current?.args != null) {
+			let index = 0;
+			for (const arg of args) {
+				const argType = current.args[index];
+				if (argType) {
+					let val;
+					if (argType.type === 'spread') {
+						val = args.slice(index).filter(i => i !== '');
+					} else {
+						val = args[index];
+					}
+					const argument = this.findType(argType);
+					if ((val == null || val.length === 0) && !([ 'spread', 'optional' ].includes(argType?.type))) {
+						const end = ending(index + 1)
+						sender.sendMessage(c`&fThe &b${index + 1}${end} &fargument is required, but wasn't specified.`);
+						return;
+					}
+					const matched = argument.match(sender, val);
+					if (matched !== false && matched !== undefined) {
+						newArgs[index] = matched;
+					} else {
+						const end = ending(index + 1);
+						switch (argType.type) {
+							case 'spread':
+								sender.sendMessage(c`&fOne of the arguments from the &b${index + 1}${end} &fspot to the final spot isn't a &b${argument.type}&f, which is the type it has to be.`);
+								return;
+							default:
+								sender.sendMessage(c`&fYour &b${index + 1}${end} &fargument must be a &b${argument.type}&f, not &b${val}`);
+								return;
+						}
+					}
+				}
+				index++;
+			}
+			if (args.length > current.args.length) {
+				const final = current.args[current.args.length - 1];
+				if (final.type !== 'spread') {
+					sender.sendMessage(c`&6Unfortunately, you have put &c${args.length} &6args when the maximum is &c${current.args.length}`);
+					return;
+				}
+			}
+		}
+
 		if (run) {
-			return run(sender, ...args);
+			return run(sender, ...newArgs);
 		} else {
 			throw new Error('No run or subcommand found');
 		}
@@ -201,11 +482,24 @@ const commands = {
 				run: cmd
 			};
 		} else {
+			if (cmd.args == null) {
+				const { cmd: cmdName, args: parsedArgs } = parse(cmd.name);
+				if (parsedArgs != null) {
+					cmd.args = parsedArgs;
+				}
+				cmd.name = cmdName;
+			}
 			if (cmd.subs) {
 				const subCommands = [];
 				for (const [ sub, actual ] of Object.entries(cmd.subs)) {
-					subCommands.push({ name: sub, ...commands.subCommand(actual) });
-				}				
+					let extra = {};
+					if (typeof actual === 'function') {
+						extra.run = actual;
+					} else {
+						extra = { ...actual };
+					}
+					subCommands.push(commands.subCommand({ name: sub, ...extra }));
+				}
 				cmd.subs = subCommands;
 			}
 			return cmd;
@@ -216,6 +510,8 @@ const commands = {
 			if (typeof args[0] == 'function') {
 				return commands.create({ run: args[0] });
 			}
+
+			const [ opts ] = args;
 
 			let {
 				description = 'A velt command',
@@ -229,6 +525,8 @@ const commands = {
 				permission = undefined,
 				permissionMessage = undefined,
 				playerOnly = undefined,
+				args: cmdArgs = undefined,
+				tabCondition = (sender, completions, args) => completions.filter(i => i.toLowerCase().startsWith(args[args.length - 1].toLowerCase())),
 				argParser =  str => str.match(/\\?.|^$/g)
 					.reduce((p, c) => {
 						if (c === '"'){
@@ -240,16 +538,30 @@ const commands = {
 						}
 						return p;
 					}, {a: ['']}).a
-			} = args[0];
-			
+			} = opts;
+
+			if (cmdArgs === undefined) {
+				const { cmd: cmdName, args: parsedArgs } = parse(name);
+				if (parsedArgs != null) {
+					cmdArgs = parsedArgs;
+					opts.args = cmdArgs;
+				}
+				name = cmdName;
+
+			}
+
+			if (tabCondition == null) {
+				tabCondition = (sender, completions) => completions;
+			}
+
 			if (argParser == null) {
 				argParser = str => str.split(' ');
 			}
-			
+
 			if (name === undefined) {
 				name = run.name;
 			}
-			
+
 			const subCommands = [];
 
 			const handleCommand = (sender, label, args) => {
@@ -260,7 +572,7 @@ const commands = {
 							sender.sendMessage(playerOnly);
 							return true;
 						} else {
-							const res = commands.delegateRun(subCommands, run, sender, parsed);
+							const res = commands.delegateRun(subCommands, run, sender, parsed, opts);
 							if (res === false) {
 								return false;
 							}
@@ -274,18 +586,18 @@ const commands = {
 					}
 					return true;
 				}
-				return false;				
+				return false;
 			};
 			const handleTabComplete = (sender, alias, args) => {
 				let parsed = argParser(internals.javaArrToJSArr(args).join(' '));
-				if (tabComplete || subCommands.length > 0) {
-					out = commands.delegateTab(subCommands, tabComplete, sender, parsed);
+				if (tabComplete || subCommands.length > 0 || cmdArgs != null) {
+					out = commands.delegateTab(subCommands, tabComplete, sender, parsed, opts);
 				} else {
 					out = [];
 				}
-				return internals.JSArrToJavaList(out);
+				return internals.JSArrToJavaList(tabCondition(sender, out, args));
 			}
-			
+
 			let cmd = Utils.makeVeltCommand(label, name, internals.JSArrToJavaList(aliases), description, usage, handleCommand, handleTabComplete, plugin);
 			if (permission) {
 				cmd.setPermission(permission);
@@ -293,14 +605,20 @@ const commands = {
 			if (permissionMessage) {
 				cmd.setPermissionMessage(permissionMessage);
 			}
-			
+
 			Utils.getCommandMap().register(cmd.getName(), "velt", cmd);
 			Bukkit.getServer().syncCommands();
-			
+
 			for (const [ sub, actual ] of Object.entries(subs)) {
-				subCommands.push({ name: sub, ...commands.subCommand(actual) });
+				let extra = {};
+				if (typeof actual === 'function') {
+					extra.run = actual;
+				} else {
+					extra = { ...actual };
+				}
+				subCommands.push(commands.subCommand({ name: sub, ...extra }));
 			}
-			
+
 			return {
 				tabComplete(call) {
 					tabComplete = call;
@@ -317,14 +635,14 @@ const commands = {
 				} else {
 					opts = args[1];
 				}
-				return commands.create({ 
+				return commands.create({
 					name: args[0],
 					...opts
 				});
 			}
 			return commands.create({ run: args[0], ...args[1] });
 		} else if (args.length == 3) {
-			return commands.create({ 
+			return commands.create({
 				name: args[0],
 				run: args[2],
 				...args[1]
@@ -335,6 +653,49 @@ const commands = {
 		return !sender instanceof Player;
 	},
 };
+
+commands
+	.createType('text', {
+		match(sender, arg) {
+			if (arg == null) return;
+			return arg;
+		}
+	})
+	.createType('integer', {
+		match(sender, arg) {
+			if (arg == null) return;
+			const parsed = parseInt(arg);
+			if (isNaN(parsed)) return;
+			return parsed;
+		}
+	})
+	.createType('number', {
+		match(sender, arg) {
+			if (arg == null) return;
+			const parsed = parseFloat(arg);
+			if (isNaN(parsed)) return;
+			return parsed;
+		}
+	})
+	.createType('boolean', {
+		tabComplete: () => [ 'true', 'false' ],
+		match(sender, arg) {
+			if (arg == null) return;
+			const bools = { true: true, false: false };
+			const val = bools[arg.toLowerCase()];
+			if (val == null) return;
+			return val;
+		}
+	})
+	.createType('player', {
+		tabComplete: () => server.onlinePlayers.map(i => i.getName()),
+		match(sender, arg) {
+			if (arg == null) return;
+			const casted = cast.asPlayer(arg);
+			if (!casted) return;
+			return casted;
+		}
+	});
 
 const server = {
 	broadcast(msg, permission = undefined) {
@@ -387,8 +748,8 @@ const server = {
 	itemstack(material, opts = {}) {
 		const {
 			count = 1,
-			name = undefined, 
-			lore = undefined, 
+			name = undefined,
+			lore = undefined,
 			durability = undefined,
 			unbreakable = undefined,
 			custommodeldata = undefined,
@@ -403,7 +764,7 @@ const server = {
 			return server.itemstack(material.material ? material.material : material.type, material);
 		} else if (typeof material === 'string') {
 			return server.itemstack(
-				server.material(material), 
+				server.material(material),
 				{ count, name, lore, durability, unbreakable, custommodeldata, enchantments, itemflags }
 			);
 		} else {
@@ -424,7 +785,7 @@ const server = {
 			} else {
 				loreArray = lore;
 			}
-			
+
 			meta.setLore(Arrays.asList(loreArray));
 		}
 		if (unbreakable !== undefined) {
@@ -450,8 +811,8 @@ const server = {
 		return item;
 	},
 	skullFromUUID(uuid, {
-		count = 1, 
-		name = undefined, 
+		count = 1,
+		name = undefined,
 		lore = undefined
 	} = {}) {
 		return server.skull(
@@ -459,9 +820,9 @@ const server = {
 			{ count, name, string }
 		);
 	},
-	skull(player, { 
-		count = 1, 
-		name = undefined, 
+	skull(player, {
+		count = 1,
+		name = undefined,
 		lore = undefined
 	} = {}) {
 		let item = new ItemStack(Material.PLAYER_HEAD, count);
@@ -592,6 +953,18 @@ const scripts = {
 	},
 	path(...paths) {
 		return Paths.get(plugin.getScriptsFolder(), ...paths).toString();
+	},
+	get dataLocation() {
+		return plugin.getScriptDataFolder();
+	},
+	dataPath(...paths) {
+		return Paths.get(plugin.getScriptDataFolder(), ...paths).toString();
+	},
+	get pluginLocation() {
+		return plugin.getPluginDataFolder();
+	},
+	pluginPath(...paths) {
+		return Paths.get(plugin.getPluginDataFolder(), ...paths).toString();
 	}
 };
 
@@ -621,42 +994,42 @@ let internals = {
 		return text
 			.replace(/([a-z])([A-Z])/g, `$1_$2`)
 			.toUpperCase()
-    },
-    javaArrToJSArr(arr) {
-    	return internals.javaListToJSArr(Arrays.asList(arr));
-    },
-    javaListToJSArr(arr) {
-    	let out = [];
-    	arr.forEach(item => out.push(item));
-    	return out;
-    },
-    JSArrToJavaList(arr) {
-    	let out = new ArrayList();
-    	arr.forEach(item => out.add(item));
-    	return out;
-    },
-    JSArrToJavaArr(arr) {
-    	return internals.JSArrToJavaList(arr).toArray();
-    },
-    timeout(promise, ticks) {
-    	let timeout = new Promise(resolve => {
-    		server.after(ticks, () => {
-    			resolve(undefined);
-    		});
-    	});
-    	
-    	return Promise.race([
-    		promise,
-    		timeout
-    	]);
-    },
-    capitalize(str) {
-        if (typeof str === 'string') {
-            return str.replace(/^\w/, c => c.toUpperCase());
-        } else {
-            return '';
-        }
-    }
+	},
+	javaArrToJSArr(arr) {
+		return internals.javaListToJSArr(Arrays.asList(arr));
+	},
+	javaListToJSArr(arr) {
+		let out = [];
+		arr.forEach(item => out.push(item));
+		return out;
+	},
+	JSArrToJavaList(arr) {
+		let out = new ArrayList();
+		arr.forEach(item => out.add(item));
+		return out;
+	},
+	JSArrToJavaArr(arr) {
+		return internals.JSArrToJavaList(arr).toArray();
+	},
+	timeout(promise, ticks) {
+		let timeout = new Promise(resolve => {
+			server.after(ticks, () => {
+				resolve(undefined);
+			});
+		});
+
+		return Promise.race([
+			promise,
+			timeout
+		]);
+	},
+	capitalize(str) {
+		if (typeof str === 'string') {
+			return str.replace(/^\w/, c => c.toUpperCase());
+		} else {
+			return '';
+		}
+	}
 };
 
 let cast = {
@@ -674,11 +1047,11 @@ let cast = {
 		} else if (Array.isArray(obj)) {
 			result = cast.asLocation(
 				{
-					x: obj[0], 
-					y: obj[1], 
-					z: obj[2], 
-					world: obj[3], 
-					yaw: obj[4], 
+					x: obj[0],
+					y: obj[1],
+					z: obj[2],
+					world: obj[3],
+					yaw: obj[4],
 					pitch: obj[5]
 				}
 			);
@@ -688,11 +1061,11 @@ let cast = {
 			result = obj.toLocation();
 		} else if (Object(obj) === obj) {
 			let {
-				x, 
-				y, 
-				z, 
-				world = server.defaultWorld(), 
-				yaw = 0, 
+				x,
+				y,
+				z,
+				world = server.defaultWorld(),
+				yaw = 0,
 				pitch = 0
 			} = obj;
 			result = new Location(cast.asWorld(world), x, y, z, yaw, pitch);
@@ -718,6 +1091,9 @@ let cast = {
 		}
 	},
 	asItemStack(obj) {
+		if (obj instanceof ItemStack) {
+			return obj;
+		}
 		return server.itemstack(obj, {});
 	},
 	asTicks(obj) {
@@ -780,7 +1156,7 @@ const infoMsg = c`
 
 commands.create('velt', {
 	argParser: null,
-    subs: {
+	subs: {
 		info: () => infoMsg,
 		help: () => infoMsg,
 		reload: () => c`&5&lVelt &8| &b/velt reload &fis not yet implemented.`,
@@ -795,7 +1171,7 @@ commands.create('velt', {
 			}
 		}
 	},
-    run: () => infoMsg
+	run: () => infoMsg
 });
 
 module.exports = {

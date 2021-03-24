@@ -9,3 +9,4 @@ target/
 .project
 dependency-reduced-pom.xml
 Velt.iml
+build.bat
