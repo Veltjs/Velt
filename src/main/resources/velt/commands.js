@@ -184,7 +184,7 @@ const commands = {
 
         if (current?.args != null) {
             let index = 0;
-            for (const arg of args.filter(i =. i !== '')) {
+            for (const arg of args.filter(i => i !== '')) {
                 const argType = current.args[index];
                 if (argType) {
                     let val;
