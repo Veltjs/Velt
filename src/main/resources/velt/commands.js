@@ -505,7 +505,7 @@ commands
         }
     })
     .createType('player', {
-        tabComplete: () => server.onlinePlayers.map(i => i.getName()),
+        tabComplete: () => require('./').server.onlinePlayers.map(i => i.getName()),
         match(sender, arg) {
             if (arg == null) return;
             const casted = cast.asPlayer(arg);
