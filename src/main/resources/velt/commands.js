@@ -508,7 +508,7 @@ commands
         tabComplete: () => require('./').server.onlinePlayers.map(i => i.getName()),
         match(sender, arg) {
             if (arg == null) return;
-            const casted = cast.asPlayer(arg);
+            const casted = require('./').cast.asPlayer(arg);
             if (!casted) return;
             return casted;
         }
