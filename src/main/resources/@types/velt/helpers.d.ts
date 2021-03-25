@@ -3,14 +3,14 @@
  * This is the documentation for the `velt/helpers` module.
  * The `velt-helpers` module contains functionality that isn't necessarily part of Velt's core, but is generally still very useful when you need it.
  * It contains one export with plenty of different utility functions and classes.
- * 
+ *
  * @module
-*/
+ */
 
 /**
  * The options of the direction, speed, and shooter for the `shoot` call.
  */
- interface ShootOpts {
+interface ShootOpts {
     dir?: Direction | any;
     speed?: number;
     shooter?: any;
@@ -277,7 +277,7 @@ export class CustomMob {
      */
     constructor(opts: CustomMobOpts);
     /**
-     * Apply the given properties (like increased health, new equipment, new custom logic with `cycle`, and etc) to the given entity. 
+     * Apply the given properties (like increased health, new equipment, new custom logic with `cycle`, and etc) to the given entity.
      * Useful if you want to convert naturally spawned mobs to this custom mob type.
      * @param entity The entity to apply the `CustomMob` properties to.
      */
@@ -346,6 +346,97 @@ export class Direction {
      * @param speed The speed to set their direction at
      */
     setDirection(entity: any, speed?: number): Direction;
+}
+
+/**
+ * Velt's crafting utility
+ */
+export interface Crafting {
+    /**
+     * Create a shaped crafting recipe.
+     * @param items the items, formatted by `{ letter: item }`
+     * @param shape an array of item keys, corresponding with the position in the crafting table
+     * @param result the output of the crafting recipe
+     * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
+     *
+     */
+    createShapedRecipe(options: {
+        items: any;
+        shape: string[];
+        result: string
+    }, namespace: string): {
+        /** Remove this recipe from the server. */
+        delete(): void;
+    }
+    /**
+     * Create a shapeless crafting recipe.
+     * @param input the items
+     * @param output the result of the crafting
+     * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
+     */
+    createShapelessRecipe(input: any[], output: any, namespace?: string): {
+        /** Remove this recipe from the server. */
+        delete(): void;
+    }
+    /**
+     * Create a furnace recipe.
+     * @param input the item
+     * @param output the result of the smelting
+     * @param xp the amount of xp the user gets as result
+     * @param cookingTime the amount of ticks it takes to cook
+     * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
+     */
+    createFurnaceRecipe(input: any, output: any, xp?: number, cookingTime?: number, namespace?: string): {
+        /** Remove this recipe from the server. */
+        delete(): void;
+    }
+    /**
+     * Create a blast furnace recipe.
+     * @param input the item
+     * @param output the result of the smelting
+     * @param xp the amount of xp the user gets as result
+     * @param cookingTime the amount of ticks it takes to cook
+     * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
+     */
+    createBlastingRecipe(input: any, output: any, xp?: number, cookingTime?: number, namespace?: string): {
+        /** Remove this recipe from the server. */
+        delete(): void;
+    }
+    /**
+     * Create a campfire recipe.
+     * @param input the item
+     * @param output the result of the cooking
+     * @param xp the amount of xp the user gets as result
+     * @param cookingTime the amount of ticks it takes to cook
+     * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
+     */
+    createCampfireRecipe(input: any, output: any, xp?: number, cookingTime?: number, namespace?: string): {
+        /** Remove this recipe from the server. */
+        delete(): void;
+    }
+    /**
+     * Create a smoker recipe.
+     * @param input the item
+     * @param output the result of the cooking
+     * @param xp the amount of xp the user gets as result
+     * @param cookingTime the amount of ticks it takes to cook
+     * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
+     */
+    createSmokingRecipe(input: any, output: any, xp?: number, cookingTime?: number, namespace?: string): {
+        /** Remove this recipe from the server. */
+        delete(): void;
+    }
+    /**
+     * Create a smithing table recipe.
+     * @param input the first item
+     * @param input2 the second item
+     * @param output the result of the smithing
+     * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
+     */
+    createSmithingRecipe(input: any, input2: any, output: any, namespace?: string): {
+        /** Remove this recipe from the server. */
+        delete(): void;
+    }
 }
 
 type EquipItem = { item: any, dropChance: number } | any;
@@ -422,7 +513,7 @@ export const drop: drop;
  */
 export const distBetween: distBetween;
 
-export const helpers: { 
+export const helpers: {
     shoot: shoot,
     lookingAt: lookingAt,
     effect: effect,
@@ -433,6 +524,7 @@ export const helpers: {
     swap: typeof swap,
     drop: typeof drop,
     distBetween: distBetween,
+    crafting: Crafting,
     Gui: typeof Gui,
     Pathfinder: typeof Pathfinder,
     Scoreboard: typeof Scoreboard,
@@ -440,7 +532,7 @@ export const helpers: {
     Inventory: typeof Inventory,
     CustomMob: typeof CustomMob,
     Item: typeof Item,
-    Direction: typeof Direction
+    Direction: typeof Direction,
 };
 
 export default helpers;

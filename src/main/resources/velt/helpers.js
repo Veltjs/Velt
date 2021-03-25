@@ -1,16 +1,17 @@
-const { server, events, cast, internals: { capitalize, javaArrToJSArr, JSArrToJavaArr, JSArrToJavaList } } = require('velt');
+const { server, events, cast, plugin, internals: { capitalize, javaArrToJSArr, JSArrToJavaArr, JSArrToJavaList } } = require('velt');
 const Utils = Java.type('xyz.corman.velt.Utils');
-const { Bukkit, Location } = Java.pkg('org.bukkit');
+const { Bukkit, Location, NamespacedKey } = Java.pkg('org.bukkit');
 const PotionEffectType = Java.type('org.bukkit.potion.PotionEffectType');
 const DisplaySlot = Java.type('org.bukkit.scoreboard.DisplaySlot');
 const { Entity, LivingEntity, Player, Projectile } = Java.pkg('org.bukkit.entity');
 const { Attribute } = Java.pkg('org.bukkit.attribute');
 const { ProjectileSource } = Java.pkg('org.bukkit.projectiles');
+const { ShapelessRecipe, ShapedRecipe, FurnaceRecipe, BlastingRecipe, CampfireRecipe, SmokingRecipe, SmithingRecipe, /* StonecuttingRecipe */, RecipeChoice } = Java.pkg('org.bukkit.inventory');
 
-function shoot(entity, proj, { 
-	dir = undefined, 
-	speed = 1, 
-	shooter = undefined 
+function shoot(entity, proj, {
+	dir = undefined,
+	speed = 1,
+	shooter = undefined
 } = {}) {
 	let loc;
 	let vel;
@@ -33,7 +34,7 @@ function shoot(entity, proj, {
 	vel = dir.normalize().multiply(speed);
 	proj = server.summon(proj, loc);
 	if (
-		(shooter instanceof ProjectileSource) 
+		(shooter instanceof ProjectileSource)
 		&& (proj instanceof Projectile)
 	) {
 		proj.setShooter(shooter);
@@ -330,9 +331,9 @@ class EntityWrapper extends Pathfinder {
 		super(entity);
 		this.entity = entity;
 	}
-	
+
 	// Entity getters and setters
-	
+
 	get dead() {
 		return this.entity.isDead();
 	}
@@ -341,7 +342,7 @@ class EntityWrapper extends Pathfinder {
 	}
 
 	// Helper methods
-	
+
 	distTo(loc) {
 		return distBetween(this.entity, cast.asLocation(loc));
 	}
@@ -395,7 +396,7 @@ class CustomMob {
 	}
 	apply(entity) {
 		const { opts } = this;
-		
+
 		const { genericMaxHealth } = attrs(entity);
 		const maxHealth = opts.maxHealth || opts.health;
 		const entityEquipment = entity.getEquipment();
@@ -424,7 +425,7 @@ class CustomMob {
 		if (opts.cycle) {
 			opts.cycle.call(new EntityWrapper(entity), entity);
 		}
-		return entity;		
+		return entity;
 	}
 	summon(loc) {
 		const entity = server.summon(opts.type, loc);
@@ -457,7 +458,7 @@ class Item {
         if (opts.interact) {
             events.on('PlayerInteractEvent', event => {
             	const item = event.getItem();
-                if (!item) return; 
+                if (!item) return;
                 if (!item.isSimilar(this.itemstack)) return;
                 opts.interact(event);
             });
@@ -468,7 +469,7 @@ class Item {
                     return;
                 }
                 const item = player.getInventory().getItemInMainHand();
-                if (!item) return; 
+                if (!item) return;
                 if (!item.isSimilar(this.itemstack)) return;
                 opts.attack(event);
             });
@@ -494,7 +495,7 @@ class Direction {
 				this.vector = new Vector(
 					Math.sin(pitch) * Math.cos(yaw),
 					Math.sin(pitch) * Math.sin(yaw),
-					Math.cos(pitch)   				
+					Math.cos(pitch)
 				);
 			} else {
 				this.vector = cast.asLocation(args[0]).toVector().subtract(cast.asLocation(args[1]).toVector());
@@ -518,6 +519,106 @@ class Direction {
 	}
 }
 
+const crafting = {
+    createShapedRecipe(options, namespace = (output.material || output)) {
+        const key = new NamespacedKey(plugin, `shaped_${namespace.replaceAll(' ', '_')}`);
+        const recipe = new ShapedRecipe(key, server.itemstack(options.result));
+
+        recipe.shape(options.patterns[0], options.patterns[1], options.patterns[2]);
+
+        Object.entries(options.items).forEach(([key, value]) => {
+            recipe.setIngredient(key, server.material(value));
+        });
+
+        Bukkit.addRecipe(recipe);
+
+        return {
+            delete() {
+                Bukkit.removeRecipe(key);
+            }
+        }
+    },
+    createShapelessRecipe(input, output, namespace = (output.material || output)) {
+        const key = new NamespacedKey(plugin, `shapeless_${namespace.replaceAll(' ', '_')}`);
+        const recipe = new ShapelessRecipe(key, server.itemstack(output));
+        input.forEach(item => recipe.addIngredient(server.itemstack(item)));
+
+        Bukkit.addRecipe(recipe);
+
+        return {
+            delete() {
+                Bukkit.removeRecipe(key);
+            }
+        }
+    },
+    createFurnaceRecipe(input, output, xp = 0, cookingTime = 20, namespace = (output.material || output)) {
+        const key = new NamespacedKey(plugin, `furnace_${(namespace.replaceAll(' ', '_'))}`);
+
+        Bukkit.addRecipe(new FurnaceRecipe(key, server.itemstack(output), server.material(input), xp, cookingTime));
+
+        return {
+            delete() {
+                Bukkit.removeRecipe(key);
+            }
+        }
+    },
+    createBlastingRecipe(input, output, xp = 0, cookingTime = 20, namespace = (output.material || output)) {
+        const key = new NamespacedKey(plugin, `blast_${(namespace.replaceAll(' ', '_'))}`);
+
+        Bukkit.addRecipe(new BlastingRecipe(key, server.itemstack(output), server.material(input), xp, cookingTime));
+
+        return {
+            delete() {
+                Bukkit.removeRecipe(key);
+            }
+        }
+    },
+    createCampfireRecipe(input, output, xp = 0, cookingTime = 20, namespace = (output.material || output)) {
+        const key = new NamespacedKey(plugin, `camp_${(namespace.replaceAll(' ', '_'))}`);
+
+        Bukkit.addRecipe(new CampfireRecipe(key, server.itemstack(output), server.material(input), xp, cookingTime));
+
+        return {
+            delete() {
+                Bukkit.removeRecipe(key);
+            }
+        }
+    },
+    createSmokingRecipe(input, output, xp = 0, cookingTime = 20, namespace = (output.material || output)) {
+        const key = new NamespacedKey(plugin, `smoke_${(namespace.replaceAll(' ', '_'))}`);
+
+        Bukkit.addRecipe(new SmokingRecipe(key, server.itemstack(output), server.material(input), xp, cookingTime));
+
+        return {
+            delete() {
+                Bukkit.removeRecipe(key);
+            }
+        }
+    },
+    createSmithingRecipe(input, input2, output, namespace = (output.material || output)) {
+        const key = new NamespacedKey(plugin, `smith_${(namespace.replaceAll(' ', '_'))}`);
+
+        Bukkit.addRecipe(new SmithingRecipe(key, server.itemstack(output), new RecipeChoice.MaterialChoice(server.material(input)), new RecipeChoice.MaterialChoice(server.material(input2)) ));
+
+        return {
+            delete() {
+                Bukkit.removeRecipe(key);
+            }
+        }
+    }/*,
+    createStonecuttingRecipe(input, output, namespace = (output.material || output)) {
+        const key = new NamespacedKey(plugin, `stone_${(namespace.replaceAll(' ', '_'))}`);
+
+        Bukkit.addRecipe(new StonecuttingRecipe(key, server.itemstack(output), server.material(input)));
+
+        return {
+            delete() {
+                Bukkit.removeRecipe(key);
+            }
+        }
+    },*/
+}
+
 module.exports = {
 	shoot,
 	lookingAt,
@@ -535,5 +636,6 @@ module.exports = {
 	drop,
 	distBetween,
 	Item,
-	Direction
+	Direction,
+	crafting
 };
