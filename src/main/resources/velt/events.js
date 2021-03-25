@@ -1,84 +1,99 @@
 const { Events } = Java.pkg('xyz.corman.velt');
+const internals = require('./internals');
 
 let eventsInst = Events.getInstance();
 
 const events = {
-    waiting: {},
-    callbacks: {},
+    listeners: [],
+    waiting: [],
     anyEvent: Symbol('anyEvent'),
-    on(event, callback) {
-        if (Array.isArray(event)) {
-            const events = event.forEach(ev => this.on(ev, callback));
-            return {
-                close() {
-                    events.forEach(ev => event.close());
-                }
+    checkTypes(types, event) {
+        for (const type of types) {
+            if (type == null) continue;
+            if (typeof type === 'function' && event instanceof type) {
+                return true;
+            } else if (type === event.getClass().getSimpleName()) {
+                return true;
             }
-        } else {
-            if (!this.callbacks[event]) this.callbacks[event] = [];
-            this.callbacks[event].push(callback);
         }
-        return this;
     },
-    removeListener(event, callback) {
-        let callbacks = events.callbacks[event];
-        callbacks.splice(callbacks.indexOf(callback), 1);
-        return this;
-    },
-    once(event, cond = undefined, options = undefined) {
-        if (options === undefined) {
-            var callback = undefined;
-            var timeout = undefined;
-        } else if (typeof options === 'function') {
-            var callback = options;
-            var timeout = undefined;
-        } else {
-            var { callback, timeout = undefined } = options;
-        }
-        if (timeout) {
-            return internals.timeout(
-                events.waitFor(event, cond, callback), timeout
-            );
-        }
-        if (Array.isArray(event)) {
-            event.forEach(ev => this.waitFor(ev, cond, callback));
-        } else {
-            let condition;
-            if (cond) {
-                condition = cond;
-            } else {
-                condition = event => true;
+    handleType(type, event) {
+        /*
+             Match the type names
+             Works in such a way that:
+             player chat_event -> PlayerChatEvent
+             playerChatEvent -> PlayerChatEvent
+             playerChat -> PlayerChatEvent
+          */
+        const newType = type
+            .split(/ |_/)
+            .map(i => internals.capitalize(i))
+            .join('');
+        const types = [ newType, `${newType}Event` ];
+        for (const typeOpt of types) {
+            const eventType = eventsInst.eventMap.get(typeOpt);
+            if (eventType != null) {
+                return [ eventType ];
             }
-            if (!this.waiting[event]) this.waiting[event] = [];
-            if (callback) {
-                this.waiting[event].push({ event, condition, callback });
-            } else {
-                return new Promise(resolve => {
-                    this.waiting[event].push(
-                        { event, condition, callback: resolve }
-                    );
+        }
+        return types;
+    },
+    on(type, run) {
+        this.listeners.push({
+            types: this.handleType(type),
+            run
+        });
+    },
+    once(...args) {
+        switch (args.length) {
+            case 3:
+                return this.once({
+                    type: args[0],
+                    condition: args[1],
+                    run: args[2]
                 });
+            case 2:
+                return this.once({
+                    type: args[0],
+                    condition: () => true
+                })
+            case 1: {
+                let { type, condition, run } = args[0];
+                const types = this.handleType(type);
+                if (run && condition) {
+                    this.waiting.push({ types, condition, run });
+                } else if (run) {
+                    this.waiting.push({ types, condition: () => true, run });
+                } else {
+                    return new Promise(res => {
+                        if (condition) {
+                            this.waiting.push({ types, condition, run: res });
+                        } else {
+                            this.waiting.push({ types, condition: () => true, run: res });
+                        }
+                    });
+                }
             }
         }
     },
     handleEvent(event) {
-        let waiting = this.waiting[event.getClass().getSimpleName()];
-        if (waiting) {
-            waiting.forEach(({ event: eventListenedFor, condition, callback }) => {
-                if (
-                    (event.getClass().getSimpleName() !== eventListenedFor) || eventListenedFor === this.anyEvent
-                ) return;
-                if (!condition(event)) return;
-                callback(event);
-                waiting.splice(waiting.indexOf(callback), 1);
-            });
-        }
-        let handler = this.callbacks[event.getClass().getSimpleName()];
-        if (!handler) return;
-        for (callback of handler) callback(event);
-        if (this.callbacks[this.anyEvent]) {
-            this.callbacks[this.anyEvent]
-                .forEach(callback => callback(event));
+        /*
+            This is bugged - needs further
+         */
+        try {
+            for (const {types, run} of this.listeners) {
+                if (this.checkTypes(types, event)) {
+                    run(event);
+                }
+            }
+            for (const {types, condition, run} of this.waiting) {
+                if (this.checkTypes(types, event) && condition(event)) {
+                    run(event);
+                    this.waiting = this.waiting.filter(i => i.run !== run);
+                }
+            }
+        } catch (e) {
+            console.error(e);
         }
     },
 }

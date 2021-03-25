@@ -41,10 +41,10 @@ const plugins = {
 };
 
 const events = require('./events');
-const commands = require('./commands');
 const internals = require('./internals');
+const commands = require('./commands');
 
-console.log(internals);
+const colorize = internals.handleStringFunc( (text, char = '&') => ChatColor.translateAlternateColorCodes(char, text));
 
 const server = {
 	broadcast(msg, permission = undefined) {
@@ -411,38 +411,9 @@ let cast = {
 	}
 }
 
-const colorize = internals.handleStringFunc( (text, char = '&') => ChatColor.translateAlternateColorCodes(char, text));
-
 const c = colorize;
 
-const infoMsg = c`
-&5&lVelt Help
-&8-----------
-&b/velt &8| &b/velt info &8| &b/velt help &8| &fGet info on how to use Velt
-&b/velt reload &8| &fReload all of your Velt scripts
-&b/velt eval &8| &fEvaluate JavaScript code in-game
-&8-----------`;
-
-
-commands.create('velt', {
-	argParser: null,
-	subs: {
-		info: () => infoMsg,
-		help: () => infoMsg,
-		reload: () => c`&5&lVelt &8| &b/velt reload &fis not yet implemented.`,
-		eval(sender, ...args) {
-			if (!sender.hasPermission('velt.eval')) return;
-			const evaluate = args.join(' ');
-			sender.sendMessage(c`&5&lVelt &8| &b${evaluate}`)
-			try {
-				sender.sendMessage(`${eval(evaluate)}`)
-			} catch (err) {
-				sender.sendMessage(c(`&c${err}`))
-			}
-		}
-	},
-	run: () => infoMsg
-});
+server.after(1, () => require('./setup'));
 
 module.exports = {
 	events,

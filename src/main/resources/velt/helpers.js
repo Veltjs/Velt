@@ -136,13 +136,20 @@ class Gui {
 			movable = false;
 			run = options;
 			close = false;
-
+		} else if (options instanceof Gui) {
+			movable = false;
+			run = options;
+			close = false;
 		} else if (options === undefined) {
 			movable = false;
 			run = () => {};
 			close = false;
 		} else {
 			({run = () => {}, movable = false, close = false} = options);
+		}
+		if (run instanceof Gui) {
+		    const _run = run;
+		    run = event => _run.open(event.getWhoClicked());
 		}
 		this.inv.setItem(slot, cast.asItemStack(item));
 		this.movable[slot] = movable;

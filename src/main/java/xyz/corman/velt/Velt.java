@@ -137,6 +137,8 @@ public class Velt extends JavaPlugin implements Listener {
 			"velt/grammar.js",
 			"velt/internals.js",
 
+			"velt/setup.js",
+
 			"npm.js",
 			
 			"@types/velt/index.d.ts",

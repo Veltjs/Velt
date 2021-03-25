@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>xyz.corman.velt</groupId>
 	<artifactId>Velt</artifactId>
-	<version>0.1.1-alpha</version>
+	<version>0.1.2-alpha</version>
 	<packaging>jar   </packaging>
 	<dependencies>
 		<dependency>
