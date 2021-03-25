@@ -131,7 +131,7 @@ require = (function() {
 			let main = 'index.js';
 			let pkgPath = Paths.get(filename, 'package.json').toString();
 			if (fileExists(pkgPath)) {
-				const pkg = JSON.parse(readFile(pkgJson), false);
+				const pkg = JSON.parse(readFile(pkgPath), false);
 				if (pkg.main) main = pkg.main;
 			}
 			return require(Paths.get(filename, main).toString(), parent);
