@@ -6,7 +6,7 @@ const DisplaySlot = Java.type('org.bukkit.scoreboard.DisplaySlot');
 const { Entity, LivingEntity, Player, Projectile } = Java.pkg('org.bukkit.entity');
 const { Attribute } = Java.pkg('org.bukkit.attribute');
 const { ProjectileSource } = Java.pkg('org.bukkit.projectiles');
-const { ShapelessRecipe, ShapedRecipe, FurnaceRecipe, BlastingRecipe, CampfireRecipe, SmokingRecipe, SmithingRecipe, /* StonecuttingRecipe */, RecipeChoice } = Java.pkg('org.bukkit.inventory');
+const { ShapelessRecipe, ShapedRecipe, FurnaceRecipe, BlastingRecipe, CampfireRecipe, SmokingRecipe, SmithingRecipe, RecipeChoice } = Java.pkg('org.bukkit.inventory');
 
 function shoot(entity, proj, {
 	dir = undefined,
