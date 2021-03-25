@@ -2,11 +2,56 @@ const { Bukkit } = Java.pkg('org.bukkit');
 const { Utils } = Java.pkg('xyz.corman.velt');
 const { Player } = Java.pkg('org.bukkit.entity');
 
-const { plugin } = require('./');
 const internals = require('./internals');
 const nearley = require('nearley');
 
 const grammar = require('./grammar');
+
+let plugin, c;
+
+const loadValues = () => {
+    ({ plugin, c } = require('velt'));
+}
+
+const format = (text, objs) => {
+    let res = text;
+    for (const [ key, val ] of Object.entries(objs)) {
+        res = res.split(`{${key}}`).join(`${val}`);
+    }
+    return c(res);
+}
+
+const getMessages = () => require('./setup').config.get()['arg types'].messages;
+const getDefaults = () => {
+    const msgs = getMessages();
+    return {
+        requiredArg: index => format(msgs['required argument'], {
+            index,
+            ending: ending(index)
+        }),
+        spreadTypeFail: (index, type) => format(msgs['spread type failure'], {
+            index,
+            ending: ending(index),
+            type
+        }),
+        typeFail: (index, type, value) => format(msgs['type failure'], {
+            index,
+            ending: ending(index),
+            type,
+            value
+        }),
+        maxFail: (givenArgs, maxArgs) => format(msgs['maximum failure'], {
+            given: givenArgs,
+            max: maxArgs
+        })
+    }
+};
+const handleMessages = (argOpts = {}) => {
+    if (argOpts == null) {
+        argOpts = {};
+    }
+    return { ...getDefaults(), ...argOpts }
+}
 
 const createParser = () => {
     return new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
@@ -154,13 +199,14 @@ const commands = {
             return [ ...extras ];
         }
     },
-    delegateRun(subs, run, sender, args, current = null) {
+    delegateRun(subs, run, sender, args, argOpts = null, current = null) {
+        argOpts = current?.argOpts ?? argOpts;
         args = args ?? [];
         const arg = args?.[0];
         if (arg != null) {
             for (const sub of subs) {
                 if (sub.name === arg) {
-                    return commands.delegateRun(sub.subs ?? [], sub.run, sender, args.slice(1), sub);
+                    return commands.delegateRun(sub.subs ?? [], sub.run, sender, args.slice(1), argOpts, sub);
                 }
             }
         }
@@ -183,8 +229,19 @@ const commands = {
         const newArgs = [ ...args ];
 
         if (current?.args != null) {
+            const msgs = handleMessages(argOpts);
+            const argList = [];
+            let count = 0;
+            for (const argType of current.args) {
+                const arg = args[count];
+                if ((arg == null || arg === '') && !([ 'spread', 'optional' ].includes(argType?.type))) {
+                    sender.sendMessage(msgs.requiredArg(count + 1));
+                    return;
+                }
+                count++;
+            }
             let index = 0;
-            for (const arg of args.filter(i => i !== '')) {
+            for (const arg of args) {
                 const argType = current.args[index];
                 if (argType) {
                     let val;
@@ -193,10 +250,12 @@ const commands = {
                     } else {
                         val = args[index];
                     }
+                    if (val === '') {
+                        val = null;
+                    }
                     const argument = this.findType(argType);
                     if ((val == null || val.length === 0) && !([ 'spread', 'optional' ].includes(argType?.type))) {
-                        const end = ending(index + 1)
-                        sender.sendMessage(c`&fThe &b${index + 1}${end} &fargument is required, but wasn't specified.`);
+                        sender.sendMessage(msgs.requiredArg(index + 1));
                         return;
                     }
                     const matched = argument.match(sender, val);
@@ -206,10 +265,10 @@ const commands = {
                         const end = ending(index + 1);
                         switch (argType.type) {
                             case 'spread':
-                                sender.sendMessage(c`&fOne of the arguments from the &b${index + 1}${end} &fspot to the final spot isn't a &b${argument.type}&f, which is the type it has to be.`);
+                                sender.sendMessage(msgs.spreadTypeFail(index + 1, argument.type));
                                 return;
                             default:
-                                sender.sendMessage(c`&fYour &b${index + 1}${end} &fargument must be a &b${argument.type}&f, not &b${val}`);
+                                sender.sendMessage(msgs.typeFail(index + 1, argument.type, val));
                                 return;
                         }
                     }
@@ -219,7 +278,7 @@ const commands = {
             if (args.length > current.args.length) {
                 const final = current.args[current.args.length - 1];
                 if (final.type !== 'spread') {
-                    sender.sendMessage(c`&6Unfortunately, you have put &c${args.length} &6args when the maximum is &c${current.args.length}`);
+                    sender.sendMessage(msgs.maxFail(args.length, current.args.length));
                     return;
                 }
             }
@@ -262,6 +321,7 @@ const commands = {
         }
     },
     create(...args) {
+        loadValues();
         if (args.length === 1) {
             if (typeof args[0] == 'function') {
                 return commands.create({ run: args[0] });
@@ -282,6 +342,7 @@ const commands = {
                 permissionMessage = undefined,
                 playerOnly = undefined,
                 args: cmdArgs = undefined,
+                argOpts = null,
                 tabCondition = (sender, completions, args) => completions.filter(i => i.toLowerCase().startsWith(args[args.length - 1].toLowerCase())),
                 argParser =  str => str.match(/\\?.|^$/g)
                     .reduce((p, c) => {
@@ -328,7 +389,7 @@ const commands = {
                             sender.sendMessage(playerOnly);
                             return true;
                         } else {
-                            const res = commands.delegateRun(subCommands, run, sender, parsed, opts);
+                            const res = commands.delegateRun(subCommands, run, sender, parsed, argOpts, opts);
                             if (res === false) {
                                 return false;
                             }
