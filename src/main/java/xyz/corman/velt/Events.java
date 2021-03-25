@@ -18,6 +18,7 @@ import io.github.classgraph.ClassInfoList;
 import org.bukkit.plugin.Plugin;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ public class Events {
 	EventExecutor executor;
 	RegisteredListener registeredListener;
 	ArrayList<Consumer<Event>> consumers = new ArrayList<Consumer<Event>>();
+	public HashMap<String, Class<? extends Event>> eventMap;
 	
 	public static Events getInstance() {
 		return instance;
@@ -41,6 +43,7 @@ public class Events {
 	@SuppressWarnings({ "unchecked" })
 	public Events(Plugin plugin) {
 		this.plugin = plugin;
+		eventMap = new HashMap<>();
 		listener = new Listener() {};
 		executor = new EventExecutor() {
 			public void execute(Listener ignored, Event event) throws EventException {
@@ -99,6 +102,8 @@ public class Events {
 			       
 			            Bukkit.getPluginManager().registerEvent(eventClass, listener,
 			                    EventPriority.NORMAL, executor, plugin);
+
+			            eventMap.put(eventClass.getSimpleName(), eventClass);
 			        }
 			    }
 			} catch (ClassNotFoundException e) {
