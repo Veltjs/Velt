@@ -351,7 +351,7 @@ export class Direction {
 /**
  * Velt's crafting utility
  */
-export interface crafting {
+export interface Crafting {
     /**
      * Create a shaped crafting recipe.
      * @param items the items, formatted by `{ letter: item }`
@@ -524,7 +524,7 @@ export const helpers: {
     swap: typeof swap,
     drop: typeof drop,
     distBetween: distBetween,
-    crafting: crafting,
+    crafting: Crafting,
     Gui: typeof Gui,
     Pathfinder: typeof Pathfinder,
     Scoreboard: typeof Scoreboard,
