@@ -7,8 +7,6 @@
  * @module
  */
 
-import { color } from "velt";
-
 /**
  * The options of the direction, speed, and shooter for the `shoot` call.
  */
