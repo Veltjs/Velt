@@ -7,6 +7,7 @@ const { Entity, LivingEntity, Player, Projectile } = Java.pkg('org.bukkit.entity
 const { Attribute } = Java.pkg('org.bukkit.attribute');
 const { ProjectileSource } = Java.pkg('org.bukkit.projectiles');
 const { ShapelessRecipe, ShapedRecipe, FurnaceRecipe, BlastingRecipe, CampfireRecipe, SmokingRecipe, SmithingRecipe, RecipeChoice } = Java.pkg('org.bukkit.inventory');
+const { BarStyle, BarColor, BarFlag } = Java.pkg('org.bukkit.boss');
 
 function shoot(entity, proj, {
 	dir = undefined,
@@ -619,6 +620,99 @@ const crafting = {
     },*/
 }
 
+const bossbar = {
+    getBossBar(bar) {
+        const bossbar = Bukkit.getServer().getBossBar(new NamespacedKey(plugin, `bar_${bar.replaceAll(' ', '_')}`));
+
+        return bossBar(bossbar);
+    },
+    getBossBars() { 
+        const bossbars = Bukkit.getServer().getBossBars();
+
+        return {
+            forEach(callback) { return bossbars.forEachRemaining(callback) }
+        }
+    },
+    createBossBar(options, namespace = options.title) {
+        const bossbar = Bukkit.getServer().createBossBar(new NamespacedKey(plugin, `bar_${namespace.replaceAll(' ', '_')}`), options.title, BarColor.valueOf(server.unformat(options.color)), BarStyle.valueOf(server.unformat(options.style)));
+        const methods = bossBar(bossbar);
+
+        if (options.flags) options.flags.forEach(flag => methods.addFlag(flag));
+        if (options.progress) methods.setProgress(options.progress);
+
+        return methods;
+    },
+}
+
+function bossBar(bossbar) {
+    return {
+        addFlag(flag) {
+            bossbar.addFlag(BarFlag.valueOf(server.unformat(flag)));
+            return this;
+        },
+        show(player) {
+            if (!player) return bossbar.setVisible(true);
+			if (Array.isArray(player)) {
+				player.forEach(p => bossbar.addPlayer(p));
+			} else {
+				bossbar.addPlayer(player);
+			}
+            return this;
+        },
+        hide(player) {
+            if (!player) return bossbar.setVisible(false);
+			if (Array.isArray(player)) {
+				player.forEach(p => bossbar.removePlayer(p));
+			} else {
+				bossbar.removePlayer(player);
+			}
+            return this;
+        },
+        removeAll() {
+            bossbar.removeAll();
+            return this;
+        },
+        removeFlag(flag) {
+            bossbar.removeFlag(BarFlag.valueOf(server.unformat(flag)));
+            return this;
+        },
+        setProgress(progress) {
+            bossbar.setProgress(progress);
+            return this;
+        },
+        setTitle(title) {
+            bossbar.setTitle(title);
+            return this;
+        },
+        setColor(color) {
+            bossbar.setColor(BarColor.valueOf(server.unformat(color)));
+            return this;
+        },   
+        setStyle(style) {
+            bossbar.setStyle(BarStyle.valueOf(server.unformat(style)));
+            return this;
+        },
+        get color() {
+            return bossbar.getColor();
+        },
+        get players() {
+            return bossbar.getPlayers();
+        },
+        get progress() {
+            return bossbar.getProgress();
+        },
+        get style() {
+            return bossbar.getStyle();
+        },
+        get title() {
+            return bossbar.getTitle();
+        },
+        get visible() {
+            return bossbar.isVisible();
+        }
+    }
+}
+
 module.exports = {
 	shoot,
 	lookingAt,
@@ -637,5 +731,6 @@ module.exports = {
 	distBetween,
 	Item,
 	Direction,
-	crafting
+	crafting,
+	bossbar
 };
