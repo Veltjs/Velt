@@ -488,7 +488,7 @@ interface BossBarMethods {
     setStyle(style: BarStyle): this;
     /** The bossbar's color. */
     color: string;
-    /** The player's the bossbar is attached to. */
+    /** The players the bossbar is attached to. */
     players: any[];
     /** How much the bossbar is filled. */
     progress: number;
