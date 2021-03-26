@@ -152,6 +152,7 @@ public class Velt extends JavaPlugin implements Listener {
 
 			"nearley.js",
 			"js-yaml.js",
+			"typescript.js",
 
 			"base64-js.js",
 			"base-64.js",

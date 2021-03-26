@@ -5,6 +5,7 @@ require = (function() {
 	const Paths = Java.type('java.nio.file.Paths');
 	const Velt = Java.type('xyz.corman.velt.Velt');
 	const FileSystem = Java.type('xyz.corman.velt.modules.FileSystem');
+	let ts;
 	
 	const readFile = (...args) => FileSystem.readFileSync(...args);
 	const fileExists = path => new File(path).exists();
@@ -74,20 +75,54 @@ require = (function() {
 				throw new Error('Module is not yet loaded and cannot be executed');
 			}
 			const { module } = this;
-			if (this.filename.endsWith('.json')) {
-				module.exports = JSON.parse(this.body, false);
-			} else {
-				const name = new File(this.filename).getName();
-				try {
-					/**const func = new Function('exports', 'module', 'require', '__filename', '__dirname', this.body);
-					Object.defineProperty(func, 'name', {value: name, configurable: true});
-					func.apply(module, [ module.exports, module, id => require(id, module), module.filename, module.path ]);*/
-					const source = `(function(exports, module, require, __filename, __dirname) {${this.body}})`;
-					const evaluated = __context.eval(Velt.fromString(source, module.filename));
-					evaluated.apply(module, [ module.exports, module, id => require(id, module), module.filename, module.path ]);
-				} catch (e) {
-					console.error(`Error in ${this.filename}`);
-					console.error(e);
+			const extensions = this.filename.split('.');
+			const extension = extensions[extensions.length - 1];
+			switch (extension) {
+				case 'json': {
+					module.exports = JSON.parse(this.body, false);
+					break;
+				}
+				case 'ts': {
+					if (!ts) {
+						const start = new Date();
+						console.log('Loading Typescript module...');
+						ts = require('typescript');
+						const end = new Date();
+						console.log(`Loaded Typescript compiler in ${Math.abs(start - end) / 1000} seconds.`)
+					}
+					const configPath = ts.findConfigFile(
+						/*searchPath*/ this.filename,
+						file => {
+							return new File(file).exists();
+						},
+						"tsconfig.json"
+					);
+					let config = {};
+					if (configPath) {
+						config = JSON.parse(require('fs').readFileSync(configPath));
+					}
+					const options = {
+						...config,
+						compilerOptions: {
+							module: ts.ModuleKind.CommonJS,
+							...(config.compilerOptions ?? {})
+						}
+					}
+					this.body = ts.transpileModule(this.body, options).outputText;
+				}
+				default: {
+					const name = new File(this.filename).getName();
+					try {
+						/**const func = new Function('exports', 'module', 'require', '__filename', '__dirname', this.body);
+						 Object.defineProperty(func, 'name', {value: name, configurable: true});
+						 func.apply(module, [ module.exports, module, id => require(id, module), module.filename, module.path ]);*/
+						const source = `(function(exports, module, require, __filename, __dirname) {${this.body}})`;
+						const evaluated = __context.eval(Velt.fromString(source, module.filename));
+						evaluated.apply(module, [module.exports, module, id => require(id, module), module.filename, module.path]);
+					} catch (e) {
+						console.error(`Error in ${this.filename}`);
+						console.error(e);
+					}
 				}
 			}
 			module.loaded = true;
@@ -112,6 +147,8 @@ require = (function() {
 				filename = `${filename}.js`;
 			} else if (fileExists(`${filename}.json`)) {
 				filename = `${filename}.json`;
+			} else if (fileExists(`${filename}.ts`)) {
+				filename = `${filename}.ts`;
 			}
 		}
 		
