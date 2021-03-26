@@ -156,7 +156,7 @@ class Gui {
 		this.callbacks[slot] = event => {
 			const out = run(event);
 			if (close) {
-				event.getWhoClicked().getInventory().closeInventory();
+				event.getWhoClicked().closeInventory();
 			}
 			return out;
 		};
