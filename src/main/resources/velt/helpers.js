@@ -621,19 +621,19 @@ const crafting = {
 }
 
 const bossbar = {
-    getBossBar(bar) {
+    getBar(bar) {
 		const bossbar = Bukkit.getServer().getBossBar(namespacedKey(`bar_${bar}`));
 
         return bossBar(bossbar);
     },
-    getBossBars() { 
+    getBars() { 
         const bossbars = Bukkit.getServer().getBossBars();
 
         return {
             forEach(callback) { return bossbars.forEachRemaining(callback) }
         }
     },
-    createBossBar(options, namespace = options.title) {
+    create(options, namespace = options.title) {
         const bossbar = Bukkit.getServer().createBossBar(namespacedKey(`bar_${namespace}`), options.title, BarColor.valueOf(server.unformat(options.color)), BarStyle.valueOf(server.unformat(options.style)));
         const methods = bossBar(bossbar);
 
