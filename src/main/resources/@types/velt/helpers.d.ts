@@ -439,6 +439,67 @@ export interface Crafting {
     }
 }
 
+/**
+ * Velt's bossbar utility.
+ */
+interface BossBar {
+    /** Get a specific BossBar made by velt. */
+    getBar(bar: string): BossBarMethods;
+    /** Get all of the server's bossbars. */
+    getBars(): BossBarMethods[];
+    /** Create a bossbar. */
+    create(options: {
+        /** The bossbar's title */
+        title: string;
+        /** The bossbar's color */
+        color: BarColor;
+        /** The bossbar style */
+        style: BarStyle;
+        /** How much the bossbar is filled */
+        progress?: number;
+        /** The bossbar flags */
+        flags?: BarFlag[];
+    }): BossBarMethods;
+
+}
+
+type BarColor = 'blue' | 'green' | 'pink' | 'purple' | 'red' | 'white' | 'yellow';
+type BarStyle = 'segmented 10' | 'segmented 12' | 'segmented 20' | 'segmented 6' | 'solid';
+type BarFlag = 'create fog' | 'darken sky' | 'play boss music';
+
+interface BossBarMethods {
+    /** Add a flag to the bossbar. */
+    addFlag(flag: BarFlag): this;
+    /** Show the bossbar to a player or players, or to all players with it hidden. */
+    show(player: any): this;
+    /** Hide the bossbar from a player or players, or to all players with it shown. */
+    hide(player: any): this;
+    /** Remove all players from the bossbar. */
+    removeAll(): this;
+    /** Remove a flag from the bossbar. */
+    removeFlag(flag: BarFlag): this;
+    /** Set how much the bossbar is filled. */
+    setProgress(progress: number): this;
+    /** Set the bossbar's title. */
+    setTitle(title: string): this;
+    /** Set the bossbar's color. */
+    setColor(color: BarColor): this;
+    /** Set the bossbar style. */
+    setStyle(style: BarStyle): this;
+    /** The bossbar's color. */
+    color: string;
+    /** The players the bossbar is attached to. */
+    players: any[];
+    /** How much the bossbar is filled. */
+    progress: number;
+    /** The bossbar style. */
+    style: string;
+    /** The bossbar's title. */
+    title: string;
+    /** If the bossbar is visible by the player's it's attached to. */
+    visible: boolean;
+}
+
 type EquipItem = { item: any, dropChance: number } | any;
 
 type shoot =  (entity: any, proj: string, opts?: ShootOpts) => any;
@@ -513,6 +574,10 @@ export const drop: drop;
  */
 export const distBetween: distBetween;
 
+export const crafting: Crafting;
+
+export const bossbar: BossBar;
+
 export const helpers: {
     shoot: shoot,
     lookingAt: lookingAt,
@@ -525,6 +590,7 @@ export const helpers: {
     drop: typeof drop,
     distBetween: distBetween,
     crafting: Crafting,
+    bossbar: BossBar,
     Gui: typeof Gui,
     Pathfinder: typeof Pathfinder,
     Scoreboard: typeof Scoreboard,

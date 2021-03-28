@@ -7,6 +7,7 @@ const { Entity, LivingEntity, Player, Projectile } = Java.pkg('org.bukkit.entity
 const { Attribute } = Java.pkg('org.bukkit.attribute');
 const { ProjectileSource } = Java.pkg('org.bukkit.projectiles');
 const { ShapelessRecipe, ShapedRecipe, FurnaceRecipe, BlastingRecipe, CampfireRecipe, SmokingRecipe, SmithingRecipe, RecipeChoice } = Java.pkg('org.bukkit.inventory');
+const { BarStyle, BarColor, BarFlag } = Java.pkg('org.bukkit.boss');
 
 function shoot(entity, proj, {
 	dir = undefined,
@@ -521,7 +522,7 @@ class Direction {
 
 const crafting = {
     createShapedRecipe(options, namespace = (output.material || output)) {
-        const key = new NamespacedKey(plugin, `shaped_${namespace.replaceAll(' ', '_')}`);
+        const key = namespacedKey(`shaped_${namespace}`);
         const recipe = new ShapedRecipe(key, server.itemstack(options.result));
 
         recipe.shape(options.patterns[0], options.patterns[1], options.patterns[2]);
@@ -539,7 +540,7 @@ const crafting = {
         }
     },
     createShapelessRecipe(input, output, namespace = (output.material || output)) {
-        const key = new NamespacedKey(plugin, `shapeless_${namespace.replaceAll(' ', '_')}`);
+        const key = namespacedKey(`shapeless_${namespace}`);
         const recipe = new ShapelessRecipe(key, server.itemstack(output));
         input.forEach(item => recipe.addIngredient(server.itemstack(item)));
 
@@ -552,7 +553,7 @@ const crafting = {
         }
     },
     createFurnaceRecipe(input, output, xp = 0, cookingTime = 20, namespace = (output.material || output)) {
-        const key = new NamespacedKey(plugin, `furnace_${(namespace.replaceAll(' ', '_'))}`);
+        const key = namespacedKey(`furnace_${namespace}`);
 
         Bukkit.addRecipe(new FurnaceRecipe(key, server.itemstack(output), server.material(input), xp, cookingTime));
 
@@ -563,7 +564,7 @@ const crafting = {
         }
     },
     createBlastingRecipe(input, output, xp = 0, cookingTime = 20, namespace = (output.material || output)) {
-        const key = new NamespacedKey(plugin, `blast_${(namespace.replaceAll(' ', '_'))}`);
+        const key = namespacedKey(`blast_${namespace}`);
 
         Bukkit.addRecipe(new BlastingRecipe(key, server.itemstack(output), server.material(input), xp, cookingTime));
 
@@ -574,7 +575,7 @@ const crafting = {
         }
     },
     createCampfireRecipe(input, output, xp = 0, cookingTime = 20, namespace = (output.material || output)) {
-        const key = new NamespacedKey(plugin, `camp_${(namespace.replaceAll(' ', '_'))}`);
+        const key = namespacedKey(`camp_${namespace}`);
 
         Bukkit.addRecipe(new CampfireRecipe(key, server.itemstack(output), server.material(input), xp, cookingTime));
 
@@ -585,7 +586,7 @@ const crafting = {
         }
     },
     createSmokingRecipe(input, output, xp = 0, cookingTime = 20, namespace = (output.material || output)) {
-        const key = new NamespacedKey(plugin, `smoke_${(namespace.replaceAll(' ', '_'))}`);
+        const key = namespacedKey(`smoke_${namespace}`);
 
         Bukkit.addRecipe(new SmokingRecipe(key, server.itemstack(output), server.material(input), xp, cookingTime));
 
@@ -596,7 +597,7 @@ const crafting = {
         }
     },
     createSmithingRecipe(input, input2, output, namespace = (output.material || output)) {
-        const key = new NamespacedKey(plugin, `smith_${(namespace.replaceAll(' ', '_'))}`);
+        const key = namespacedKey(`smith_${namespace}`);
 
         Bukkit.addRecipe(new SmithingRecipe(key, server.itemstack(output), new RecipeChoice.MaterialChoice(server.material(input)), new RecipeChoice.MaterialChoice(server.material(input2)) ));
 
@@ -619,6 +620,104 @@ const crafting = {
     },*/
 }
 
+const bossbar = {
+    getBar(bar) {
+		const bossbar = Bukkit.getServer().getBossBar(namespacedKey(`bar_${bar}`));
+
+        return bossBar(bossbar);
+    },
+    getBars() { 
+        const bossbars = Bukkit.getServer().getBossBars();
+
+        return {
+            forEach(callback) { return bossbars.forEachRemaining(callback) }
+        }
+    },
+    create(options, namespace = options.title) {
+        const bossbar = Bukkit.getServer().createBossBar(namespacedKey(`bar_${namespace}`), options.title, BarColor.valueOf(server.unformat(options.color)), BarStyle.valueOf(server.unformat(options.style)));
+        const methods = bossBar(bossbar);
+
+        if (options.flags) options.flags.forEach(flag => methods.addFlag(flag));
+        if (options.progress) methods.setProgress(options.progress);
+
+        return methods;
+    },
+}
+
+function bossBar(bossbar) {
+    return {
+        addFlag(flag) {
+            bossbar.addFlag(BarFlag.valueOf(server.unformat(flag)));
+            return this;
+        },
+        show(player) {
+            if (!player) return bossbar.setVisible(true);
+			if (Array.isArray(player)) {
+				player.forEach(p => bossbar.addPlayer(p));
+			} else {
+				bossbar.addPlayer(player);
+			}
+            return this;
+        },
+        hide(player) {
+            if (!player) return bossbar.setVisible(false);
+			if (Array.isArray(player)) {
+				player.forEach(p => bossbar.removePlayer(p));
+			} else {
+				bossbar.removePlayer(player);
+			}
+            return this;
+        },
+        removeAll() {
+            bossbar.removeAll();
+            return this;
+        },
+        removeFlag(flag) {
+            bossbar.removeFlag(BarFlag.valueOf(server.unformat(flag)));
+            return this;
+        },
+        setProgress(progress) {
+            bossbar.setProgress(progress);
+            return this;
+        },
+        setTitle(title) {
+            bossbar.setTitle(title);
+            return this;
+        },
+        setColor(color) {
+            bossbar.setColor(BarColor.valueOf(server.unformat(color)));
+            return this;
+        },   
+        setStyle(style) {
+            bossbar.setStyle(BarStyle.valueOf(server.unformat(style)));
+            return this;
+        },
+        get color() {
+            return bossbar.getColor();
+        },
+        get players() {
+            return bossbar.getPlayers();
+        },
+        get progress() {
+            return bossbar.getProgress();
+        },
+        get style() {
+            return bossbar.getStyle();
+        },
+        get title() {
+            return bossbar.getTitle();
+        },
+        get visible() {
+            return bossbar.isVisible();
+        }
+    }
+}
+
+/** Unexported utility for creating a NamespacedKey. */
+function namespacedKey(input) {
+    return new NamespacedKey(plugin, input.replace(/((?![a-z0-9._-]+).)*/g, ''));
+}
+
 module.exports = {
 	shoot,
 	lookingAt,
@@ -637,5 +736,6 @@ module.exports = {
 	distBetween,
 	Item,
 	Direction,
-	crafting
+	crafting,
+	bossbar
 };
