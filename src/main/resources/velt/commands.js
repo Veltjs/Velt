@@ -389,17 +389,12 @@ const commands = {
                 let parsed = argParser(internals.javaArrToJSArr(args).join(' '));
                 if (run || subCommands.length > 0) {
                     try {
-                        if (playerOnly && commands.isConsole(sender)) {
-                            sender.sendMessage(playerOnly);
-                            return true;
-                        } else {
-                            const res = commands.delegateRun(subCommands, run, sender, parsed, argOpts, opts);
-                            if (res === false) {
-                                return false;
-                            }
-                            if (typeof res === 'string') {
-                                sender.sendMessage(res);
-                            }
+                        const res = commands.delegateRun(subCommands, run, sender, parsed, argOpts, opts);
+                        if (res === false) {
+                            return false;
+                        }
+                        if (typeof res === 'string') {
+                            sender.sendMessage(res);
                         }
                     } catch (e) {
                         console.error(e);
@@ -471,7 +466,7 @@ const commands = {
         }
     },
     isConsole(sender) {
-        return !sender instanceof Player;
+        return !(sender instanceof Player);
     },
 };
 
