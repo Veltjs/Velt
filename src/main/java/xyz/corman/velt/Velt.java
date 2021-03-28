@@ -346,7 +346,7 @@ public class Velt extends JavaPlugin implements Listener {
 				task.cancel();
 			}
 		}
-		context.close();
+		// context.close();
 	}
 	public void load() {
 		new BukkitRunnable() {
