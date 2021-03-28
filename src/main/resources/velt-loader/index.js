@@ -6,7 +6,87 @@ require = (function() {
 	const Velt = Java.type('xyz.corman.velt.Velt');
 	const FileSystem = Java.type('xyz.corman.velt.modules.FileSystem');
 	let ts;
-	
+
+	const libCache = {};
+
+	const libs = Paths.get(
+		Velt.getInstance().getDataFolder().getAbsolutePath(),
+		"node_modules",
+		"typescript"
+	);
+
+	const path = Paths.get(
+		Velt.getInstance().getDataFolder().getAbsolutePath(),
+		"node_modules",
+		"typescript",
+		"lib",
+		"lib.d.ts"
+	).toString();
+
+	const compile = (file, source) => {
+		let output;
+		let program = ts.createProgram([file], { allowJs: true }, {
+			getSourceFile(fileName, languageVersion) {
+				const isLib = Paths.get(fileName).startsWith(libs);
+				if (isLib) {
+					if (libCache[fileName]) {
+						return libCache[fileName];
+					}
+				}
+				let sourceText = readFile(fileName);
+				if (isLib) {
+					console.log('Generating Typescript Lib:', fileName);
+				}
+				const out = sourceText !== undefined
+					? ts.createSourceFile(fileName, sourceText, languageVersion)
+					: undefined;
+				if (isLib) {
+					libCache[file] = out;
+				}
+				return out;
+			},
+			getDefaultLibFileName: () => path,
+			writeFile: (fileName, content) => {
+				output = content;
+			},
+			getCurrentDirectory: () => new File(file).getParentFile().getAbsolutePath(),
+			getDirectories: path => [],
+			getCanonicalFileName: fileName => fileName,
+			getNewLine: () => '\n',
+			useCaseSensitiveFileNames: () => false,
+			readFile(name) {
+				return readFile(name);
+			},
+			fileExists(path) {
+				return path !== file;
+			}
+		});
+		let emitResult = program.emit();
+
+		let allDiagnostics = ts
+			.getPreEmitDiagnostics(program)
+			.concat(emitResult.diagnostics);
+
+		let success = true;
+		allDiagnostics.forEach(diagnostic => {
+			if (!(diagnostic.file)) {
+				return;
+			}
+			const simplified = Paths.get(diagnostic.file.fileName);
+			if (!(simplified.startsWith(libs))) {
+				let { line, character } = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
+				let message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
+				console.error(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`);
+				success = false;
+			}
+		});
+		if (success) {
+			return output;
+		} else {
+			return null;
+		}
+	};
+
 	const readFile = (...args) => FileSystem.readFileSync(...args);
 	const fileExists = path => new File(path).exists();
 	const directoryExists = path => {
@@ -23,7 +103,7 @@ require = (function() {
 		}
 		return output;
 	};
-	
+
 	const cache = {};
 
 	class ModuleError extends Error {
@@ -32,9 +112,9 @@ require = (function() {
 			this.name = this.constructor.name;
 		}
 	}
-	
+
 	class Failure {}
-	
+
 	class Module {
 		constructor(id, filename, parent) {
 			this.id = id;
@@ -42,22 +122,22 @@ require = (function() {
 			this.path = new File(filename).getParent().toString();
 			this.loaded = false;
 			this.children = [];
-			
+
 			if (parent && parent.children) parent.children.push(this);
-			
+
 			this.exports = {};
 		}
-		
+
 		get exports() {
 			return this._exports;
 		}
-		
+
 		set exports(val) {
 			this._exports = val;
 			cache[this.filename] = val;
 		}
 	}
-	
+
 	class NodeModule {
 		constructor(id, filename) {
 			this.id = id;
@@ -66,7 +146,7 @@ require = (function() {
 			this.module = new Module(this.id, this.filename);
 		}
 		load() {
-			this.body = cleanString(readFile(this.filename));
+			this.body = (readFile(this.filename));
 			this.loaded = true;
 			return this;
 		}
@@ -84,7 +164,8 @@ require = (function() {
 				}
 				case 'ts': {
 					if (!ts) {
-						const start = new Date();
+						const start = new Date()
+						console.error('TypeScript Support is Experimental - Please do not use it in producdtion!');
 						console.log('Loading Typescript module...');
 						ts = require('typescript');
 						const end = new Date();
@@ -108,28 +189,33 @@ require = (function() {
 							...(config.compilerOptions ?? {})
 						}
 					}
-					this.body = ts.transpileModule(this.body, options).outputText;
-				}
-				default: {
-					const name = new File(this.filename).getName();
-					try {
-						/**const func = new Function('exports', 'module', 'require', '__filename', '__dirname', this.body);
-						 Object.defineProperty(func, 'name', {value: name, configurable: true});
-						 func.apply(module, [ module.exports, module, id => require(id, module), module.filename, module.path ]);*/
-						const source = `(function(exports, module, require, __filename, __dirname) {${this.body}})`;
-						const evaluated = __context.eval(Velt.fromString(source, module.filename));
-						evaluated.apply(module, [module.exports, module, id => require(id, module), module.filename, module.path]);
-					} catch (e) {
-						console.error(`Error in ${this.filename}`);
-						console.error(e);
+					const out = compile(this.filename, this.body);
+					if (out == null) {
+						console.error(`Could not succesfully compile ${this.filename}`);
 					}
+					this.body = out;
+					break;
+				}
+			}
+			if (extension !== 'json') {
+				const name = new File(this.filename).getName();
+				try {
+					/**const func = new Function('exports', 'module', 'require', '__filename', '__dirname', this.body);
+					 Object.defineProperty(func, 'name', {value: name, configurable: true});
+					 func.apply(module, [ module.exports, module, id => require(id, module), module.filename, module.path ]);*/
+					const source = `(function(exports, module, require, __filename, __dirname) {${this.body}\n})`;
+					const evaluated = __context.eval(Velt.fromString(source, module.filename));
+					evaluated.apply(module, [module.exports, module, id => require(id, module), module.filename, module.path]);
+				} catch (e) {
+					console.error(`Error in ${this.filename}`);
+					console.error(e);
 				}
 			}
 			module.loaded = true;
 			return module.exports;
 		}
 	}
-	
+
 	const require = function(id, parent, level = 0) {
 		/*
 		 * Support Exists for:
@@ -139,7 +225,7 @@ require = (function() {
 		 * - JSON Modules
 		 * - Using require on directories
 		 */
-		
+
 		let filename = Utils.toAbsolutePath(id, (parent && parent.path && Paths.get(parent.path)) || Paths.get(""));
 
 		if (!fileExists(filename)) { //Add in JS or JSON extension
@@ -151,7 +237,7 @@ require = (function() {
 				filename = `${filename}.ts`;
 			}
 		}
-		
+
 		if (!fileExists(filename)) { //Resolve as a node module, either a core or regular module
 			if (level == 0) {
 				const modules = Paths.get(Velt.getInstance().getDataFolder().getAbsolutePath().toString(), "node_modules", id).toString();
@@ -161,9 +247,9 @@ require = (function() {
 				return res;
 			} else {
 				return Failure;
-			} 
+			}
 		}
-		
+
 		if (directoryExists(filename)) { //Handle module as directory. TODO: Work with package.json
 			let main = 'index.js';
 			let pkgPath = Paths.get(filename, 'package.json').toString();
@@ -173,20 +259,20 @@ require = (function() {
 			}
 			return require(Paths.get(filename, main).toString(), parent);
 		}
-		
+
 		if (cache[filename]) {
 			return cache[filename];
 		}
-		
+
 		const module = new NodeModule(id, filename)
 			.load();
-		
+
 		let val;
-		
+
 		val = module.execute();
-		
+
 		return val;
 	};
-	
+
 	return require;
 })();

@@ -120,6 +120,67 @@ public class Velt extends JavaPlugin implements Listener {
 
 			"jvm-npm/src/main/javascript/jvm-npm.js",
 			"velt-loader/index.js",
+
+			/*=========================
+             * Typecript Lib
+            ==========================*/
+
+			"typescript/lib/lib.d.ts",
+			"typescript/lib/lib.dom.d.ts",
+			"typescript/lib/lib.dom.iterable.d.ts",
+			"typescript/lib/lib.es2015.collection.d.ts",
+			"typescript/lib/lib.es2015.core.d.ts",
+			"typescript/lib/lib.es2015.d.ts",
+			"typescript/lib/lib.es2015.generator.d.ts",
+			"typescript/lib/lib.es2015.iterable.d.ts",
+			"typescript/lib/lib.es2015.promise.d.ts",
+			"typescript/lib/lib.es2015.proxy.d.ts",
+			"typescript/lib/lib.es2015.reflect.d.ts",
+			"typescript/lib/lib.es2015.symbol.d.ts",
+			"typescript/lib/lib.es2015.symbol.wellknown.d.ts",
+			"typescript/lib/lib.es2016.array.include.d.ts",
+			"typescript/lib/lib.es2016.d.ts",
+			"typescript/lib/lib.es2016.full.d.ts",
+			"typescript/lib/lib.es2017.d.ts",
+			"typescript/lib/lib.es2017.full.d.ts",
+			"typescript/lib/lib.es2017.intl.d.ts",
+			"typescript/lib/lib.es2017.object.d.ts",
+			"typescript/lib/lib.es2017.sharedmemory.d.ts",
+			"typescript/lib/lib.es2017.string.d.ts",
+			"typescript/lib/lib.es2017.typedarrays.d.ts",
+			"typescript/lib/lib.es2018.asyncgenerator.d.ts",
+			"typescript/lib/lib.es2018.asynciterable.d.ts",
+			"typescript/lib/lib.es2018.d.ts",
+			"typescript/lib/lib.es2018.full.d.ts",
+			"typescript/lib/lib.es2018.intl.d.ts",
+			"typescript/lib/lib.es2018.promise.d.ts",
+			"typescript/lib/lib.es2018.regexp.d.ts",
+			"typescript/lib/lib.es2019.array.d.ts",
+			"typescript/lib/lib.es2019.d.ts",
+			"typescript/lib/lib.es2019.full.d.ts",
+			"typescript/lib/lib.es2019.object.d.ts",
+			"typescript/lib/lib.es2019.string.d.ts",
+			"typescript/lib/lib.es2019.symbol.d.ts",
+			"typescript/lib/lib.es2020.bigint.d.ts",
+			"typescript/lib/lib.es2020.d.ts",
+			"typescript/lib/lib.es2020.full.d.ts",
+			"typescript/lib/lib.es2020.intl.d.ts",
+			"typescript/lib/lib.es2020.promise.d.ts",
+			"typescript/lib/lib.es2020.sharedmemory.d.ts",
+			"typescript/lib/lib.es2020.string.d.ts",
+			"typescript/lib/lib.es2020.symbol.wellknown.d.ts",
+			"typescript/lib/lib.es5.d.ts",
+			"typescript/lib/lib.es6.d.ts",
+			"typescript/lib/lib.esnext.d.ts",
+			"typescript/lib/lib.esnext.full.d.ts",
+			"typescript/lib/lib.esnext.intl.d.ts",
+			"typescript/lib/lib.esnext.promise.d.ts",
+			"typescript/lib/lib.esnext.string.d.ts",
+			"typescript/lib/lib.esnext.weakref.d.ts",
+			"typescript/lib/lib.scripthost.d.ts",
+			"typescript/lib/lib.webworker.d.ts",
+			"typescript/lib/lib.webworker.importscripts.d.ts",
+			"typescript/lib/lib.webworker.iterable.d.ts",
 				
 			/*=========================
 			 * Velt modules
@@ -152,7 +213,8 @@ public class Velt extends JavaPlugin implements Listener {
 
 			"nearley.js",
 			"js-yaml.js",
-			"typescript.js",
+			"typescript/index.js",
+			"skulpt.js",
 
 			"base64-js.js",
 			"base-64.js",
@@ -313,7 +375,7 @@ public class Velt extends JavaPlugin implements Listener {
 						}
 						log.info(String.format("Loading script: %s", file.getName()));
 						String absPath = Utils.escape(file.getAbsolutePath().trim());
-						context.eval(fromString("require('" + absPath + "')", path));
+						context.eval(fromString("require('" + absPath + "')", "<Loading>"));
 					}
 				});
 			}

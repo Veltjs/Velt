@@ -1,3 +1,5 @@
+console.log('Loading globals...');
+
 globalThis.global = globalThis;
 
 const { setTimeout, setInterval, clearTimeout, clearInterval } = require('timers');

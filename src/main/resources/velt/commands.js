@@ -226,7 +226,7 @@ const commands = {
             }
         }
 
-        const newArgs = [ ...args ];
+        const newArgs = [];
 
         if (current?.args != null) {
             const msgs = handleMessages(argOpts);
@@ -260,7 +260,11 @@ const commands = {
                     }
                     const matched = argument.match(sender, val);
                     if (matched !== false && matched !== undefined) {
-                        newArgs[index] = matched;
+                        if (argType.type === 'spread') {
+                            args.push(...val);
+                        } else {
+                            args[index] = val;
+                        }
                     } else {
                         const end = ending(index + 1);
                         switch (argType.type) {

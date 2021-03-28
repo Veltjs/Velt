@@ -33,12 +33,6 @@ import xyz.corman.velt.Velt.ContextCallback;
 public class Utils {
 	static List<VeltCommand> commands  = new ArrayList<>();;
 
-	public static String readFile(String path, String encoding) throws IOException {
-		Scanner scanner = new Scanner(new File(path), encoding);
-		String result = scanner.useDelimiter("\\A").next();
-		scanner.close();
-		return result;
-	}
 	public static String convertStreamToString(InputStream is) {
 	    try (Scanner scanner = new Scanner(is)) {
 			try (Scanner s = scanner.useDelimiter("\\A")) {

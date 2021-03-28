@@ -45,22 +45,9 @@ public class FileSystem {
 		writer.write(content);
 		writer.close();
 	}
-	
-	public static String readFileSync(String name) throws IOException {
-		BufferedReader reader = new BufferedReader(new FileReader(name));
-		StringBuilder stringBuilder = new StringBuilder();
-		String line = null;
-		String ls = System.getProperty("line.separator");
-		while ((line = reader.readLine()) != null) {
-			stringBuilder.append(line);
-			stringBuilder.append(ls);
-		}
-		// delete the last new line separator
-		stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-		reader.close();
 
-		String content = stringBuilder.toString();
-		return content;
+	public static String readFileSync(String path) throws IOException {
+		return new String(Files.readAllBytes(Paths.get(path)));
 	}
 	public static void createFileSync(String name) throws IOException {
 		File file = new File(name);
