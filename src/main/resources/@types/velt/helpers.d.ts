@@ -444,11 +444,11 @@ export interface Crafting {
  */
 interface BossBar {
     /** Get a specific BossBar made by velt. */
-    getBossBar(bar: string): BossBarMethods;
+    getBar(bar: string): BossBarMethods;
     /** Get all of the server's bossbars. */
-    getBossBars(): BossBarMethods[];
+    getBars(): BossBarMethods[];
     /** Create a bossbar. */
-    createBossBar(options: {
+    create(options: {
         /** The bossbar's title */
         title: string;
         /** The bossbar's color */
