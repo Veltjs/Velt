@@ -1,4 +1,4 @@
-const { commands, scripts, c } = require('./');
+const { commands, scripts, c, plugin } = require('./');
 const { Storage } = require('./storage');
 
 const infoMsg = c`
@@ -9,20 +9,31 @@ const infoMsg = c`
 &b/velt eval &8| &fEvaluate JavaScript code in-game
 &8-----------`;
 
+function reload(sender) {
+    sender.sendMessage(c`&5&lVelt &8| &bReloading all scripts.`);
+    try {
+        plugin.reload();
+        sender.sendMessage(c`&5&lVelt &8| &aReloaded all scripts.`);
+    } catch (err) {
+        sender.sendMessage(c(`&c${err}`));
+    }
+}
+
 commands.create('velt', {
     argParser: null,
     subs: {
         info: () => infoMsg,
         help: () => infoMsg,
-        reload: () => c`&5&lVelt &8| &b/velt reload &fis not yet implemented.`,
+        reload: reload,
+        rl: reload,
         eval(sender, ...args) {
             if (!sender.hasPermission('velt.eval')) return;
             const evaluate = args.join(' ');
-            sender.sendMessage(c`&5&lVelt &8| &b${evaluate}`)
+            sender.sendMessage(c`&5&lVelt &8| &b${evaluate}`);
             try {
-                sender.sendMessage(`${eval(evaluate)}`)
+                sender.sendMessage(`${eval(evaluate)}`);
             } catch (err) {
-                sender.sendMessage(c(`&c${err}`))
+                sender.sendMessage(c(`&c${err}`));
             }
         }
     },
