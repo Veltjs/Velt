@@ -5,14 +5,28 @@ require = (function() {
 	const Paths = Java.type('java.nio.file.Paths');
 	const Velt = Java.type('xyz.corman.velt.Velt');
 	const FileSystem = Java.type('xyz.corman.velt.modules.FileSystem');
+	let fs;
 	let ts;
 
-	const libCache = {};
+	let libCache;
+	const inst = Velt.getInstance();
+	if (inst.getLibs() != null) {
+		libCache = inst.getLibs();
+	} else {
+		libCache = {};
+		inst.setLibs(libCache);
+	}
 
 	const libs = Paths.get(
 		Velt.getInstance().getDataFolder().getAbsolutePath(),
 		"node_modules",
 		"typescript"
+	);
+
+	const types = Paths.get(
+		Velt.getInstance().getDataFolder().getAbsolutePath(),
+		"node_modules",
+		"@types"
 	);
 
 	const path = Paths.get(
@@ -23,14 +37,17 @@ require = (function() {
 		"lib.d.ts"
 	).toString();
 
-	const compile = (file, source) => {
+	const compileFull = (file, source) => {
 		let output;
 		let program = ts.createProgram([file], { allowJs: true }, {
 			getSourceFile(fileName, languageVersion) {
-				const isLib = Paths.get(fileName).startsWith(libs);
+				const path = Paths.get(fileName);
+				const formatted = path.toString();
+				const isLib = path.startsWith(libs);
 				if (isLib) {
-					if (libCache[fileName]) {
-						return libCache[fileName];
+					console.log('Here:', formatted, !!libCache[formatted], Object.keys(libCache));
+					if (libCache[formatted]) {
+						return libCache[formatted];
 					}
 				}
 				let sourceText = readFile(fileName);
@@ -41,7 +58,7 @@ require = (function() {
 					? ts.createSourceFile(fileName, sourceText, languageVersion)
 					: undefined;
 				if (isLib) {
-					libCache[file] = out;
+					libCache[formatted] = out;
 				}
 				return out;
 			},
@@ -55,10 +72,15 @@ require = (function() {
 			getNewLine: () => '\n',
 			useCaseSensitiveFileNames: () => false,
 			readFile(name) {
-				return readFile(name);
+				const exists = new File(name).exists();
+				if (exists) {
+					return fs.readFile(name);
+				} else {
+					return Promise.resolve(null);
+				}
 			},
 			fileExists(path) {
-				return path !== file;
+				return new File(path).exists();
 			}
 		});
 		let emitResult = program.emit();
@@ -73,7 +95,7 @@ require = (function() {
 				return;
 			}
 			const simplified = Paths.get(diagnostic.file.fileName);
-			if (!(simplified.startsWith(libs))) {
+			if (!(simplified.startsWith(libs)) && !(simplified.startsWith(types))) {
 				let { line, character } = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
 				let message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
 				console.error(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`);
@@ -86,6 +108,9 @@ require = (function() {
 			return null;
 		}
 	};
+	const compile = (source, config) => {
+		return ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS }}).outputText;
+	}
 
 	const readFile = (...args) => FileSystem.readFileSync(...args);
 	const fileExists = path => new File(path).exists();
@@ -163,6 +188,9 @@ require = (function() {
 					break;
 				}
 				case 'ts': {
+					if (!fs) {
+						fs = require('fs');
+					}
 					if (!ts) {
 						const start = new Date()
 						console.error('TypeScript Support is Experimental - Please do not use it in producdtion!');
@@ -189,7 +217,7 @@ require = (function() {
 							...(config.compilerOptions ?? {})
 						}
 					}
-					const out = compile(this.filename, this.body);
+					const out = compile(this.body, options);
 					if (out == null) {
 						console.error(`Could not succesfully compile ${this.filename}`);
 					}

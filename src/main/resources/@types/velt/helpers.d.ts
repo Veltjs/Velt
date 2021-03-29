@@ -262,9 +262,9 @@ interface CustomMobOpts {
     adult?: boolean;
     baby?: boolean;
     equipment?: Equipment;
-    attrs: { [ prop: string ]: any };
-    effects: EffectOpts[];
-    cycle(this: EntityWrapper, entity: any): any;
+    attrs?: { [ prop: string ]: any };
+    effects?: EffectOpts[];
+    cycle?(this: EntityWrapper, entity: any): any;
 }
 
 /**

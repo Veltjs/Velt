@@ -48,7 +48,7 @@ const config = Storage.createConfig(scripts.pluginPath('config.yml'), {
             'required argument': '&fThe &b{index}{ending} &fargument is required, but wasn\'t specified.',
             'spread type failure': '&fOne of the arguments from the &b{index}{ending} &fspot to the final spot isn\'t a &b{type}&f, which is the type it has to be.',
             'type failure': '&fYour &b{index}{ending} &fargument must be a &b{type}&f, not &b{value}',
-            'maximum failure': 'c`&6Unfortunately, you have put &c{given} &6args when the maximum is &c{max}'
+            'maximum failure': '&fUnfortunately, you have put &b{given} &6args when the maximum is &b{max}'
         }
     },
     'simple commands': []

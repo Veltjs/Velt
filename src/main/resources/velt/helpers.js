@@ -429,7 +429,7 @@ class CustomMob {
 		return entity;
 	}
 	summon(loc) {
-		const entity = server.summon(opts.type, loc);
+		const entity = server.summon(this.opts.type, loc);
 		return this.apply(entity);
 	}
 }

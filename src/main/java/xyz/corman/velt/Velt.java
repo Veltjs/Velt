@@ -22,6 +22,9 @@ import org.bukkit.scheduler.BukkitTask;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 
+import org.bukkit.command.Command;
+
+import org.graalvm.polyglot.Value;
 import xyz.corman.velt.modules.FileSystem;
 
 //import org.bstats.bukkit.Metrics;
@@ -36,6 +39,7 @@ public class Velt extends JavaPlugin implements Listener {
 	private File modulesFolder;
 	private File libFolder;
 	private File scriptDataFolder;
+	private Value libs;
 	Logger log;
 	String[] extensions = new String[] {
 		".js",
@@ -45,7 +49,14 @@ public class Velt extends JavaPlugin implements Listener {
 		".jsx",
 		".tsx"
 	};
-	
+
+	public Value getLibs() {
+		return libs;
+	}
+	public void setLibs(Value value) {
+		libs = value;
+	}
+
 	private Context context;
 	
 	public String getScriptsFolder() {
@@ -95,6 +106,7 @@ public class Velt extends JavaPlugin implements Listener {
         metrics.addCustomChart(new Metrics.SimplePie("script_count", () -> String.format("%s", scriptsFolder.listFiles().length)));
 	}
 	public void onEnable() {
+		setLibs(null);
 		log = this.getLogger();
 		instance = this;
 		dataFolder = getDataFolder();
@@ -208,6 +220,8 @@ public class Velt extends JavaPlugin implements Listener {
 			"@types/velt/helpers.d.ts",
 			"@types/velt/storage.d.ts",
 			"@types/velt/convert.d.ts",
+
+			"@types/node/globals.d.ts",
 			
 			/*==============================
 			 * Node module dependencies
@@ -306,7 +320,7 @@ public class Velt extends JavaPlugin implements Listener {
 		Events.setInstance(new Events(this));
 		
 		List<String> classpath = new ArrayList<String>();
-		
+
 		load();
 		
 		loadBStats();
@@ -337,9 +351,9 @@ public class Velt extends JavaPlugin implements Listener {
 		for (VeltCommand command : Utils.commands) {
 			command.unregister(Utils.getCommandMap());
 		}
-		Map<String, org.bukkit.command.Command> knownCommands = Utils.getKnownCommands();
-		for (Iterator<org.bukkit.command.Command> i = knownCommands.values().iterator(); i.hasNext(); ) {
-			org.bukkit.command.Command cmd = i.next();
+		Map<String, Command> knownCommands = Utils.getKnownCommands();
+		for (Iterator<Command> i = knownCommands.values().iterator(); i.hasNext(); ) {
+			Command cmd = i.next();
 			if (cmd instanceof VeltCommand) {
 				i.remove();
 			}
@@ -355,19 +369,26 @@ public class Velt extends JavaPlugin implements Listener {
 				task.cancel();
 			}
 		}
-		// context.close();
+		try {
+			context.eval(fromString("throw new Error()", "<error>"));
+		} catch (Exception e) {}
+	}
+	public void loadOnce() {
+		context = ContextCreation.createContext();
 	}
 	public void load() {
 		new BukkitRunnable() {
 			public void run() {
 				Utils.runInPluginContext(() -> {
-					context = ContextCreation.createContext();
+					if (context == null) {
+						loadOnce();
+					}
 					context.getBindings("js").putMember("__context", context);
 					String loaderPath = String.join(File.separator, dataFolder.getAbsolutePath(), "node_modules", "velt-loader", "index.js")
-						.trim();
+							.trim();
 					loaderPath = Utils.escape(loaderPath);
-					log.info("Loading scripts");
 					context.eval(fromString("load('" + loaderPath + "')", "velt-loader.js"));
+					log.info("Loading scripts");
 					context.eval(fromString("require('globals')", "globals.js"));
 					for (File file : scriptsFolder.listFiles()) {
 						String path = file.getAbsolutePath();
@@ -388,7 +409,7 @@ public class Velt extends JavaPlugin implements Listener {
 					}
 				});
 			}
-		}.runTaskLater(this, 0);
+		}.runTaskLater(this, 1);
 	}
 	public static Source fromString(String string, String path) {
 		return Source.newBuilder("js", string, path).buildLiteral();

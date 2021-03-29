@@ -103,7 +103,7 @@ const commands = {
         return this.createType({
             type: name,
             tabComplete: () => arr,
-            match: (sender, arg) => arr.toLowerCase().includes(arg.toLowerCase())
+            match: (sender, arg) => arr.map(i => i.toLowerCase()).includes(arg.toLowerCase())
         });
     },
     getType(type) {
@@ -262,9 +262,9 @@ const commands = {
                     const matched = argument.match(sender, val);
                     if (matched !== false && matched !== undefined) {
                         if (argType.type === 'spread') {
-                            args.push(...val);
+                            newArgs.push(...matched);
                         } else {
-                            args[index] = val;
+                            newArgs[index] = matched;
                         }
                     } else {
                         const end = ending(index + 1);

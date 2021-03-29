@@ -10,7 +10,7 @@
 /**
  * The Velt `color` function, with multiple aliases. Converts a string (optionally from a template literal) to its colored version.
  */
-type Color = ((text: string) => string) | ((text: string[], ...args: string[]) => string);
+type Color = ((text: string) => string) | ((text: TemplateStringsArray) => string);
 
 /**
  * The `Velt` type, returned by the `velt` module, providing you with the core functionality to power your code.
@@ -436,5 +436,9 @@ export const cast: Cast;
  * The Velt `color` function, with multiple aliases. Converts a string (optionally from a template literal) to its colored version.
  */
 export const color: Color;
+/**
+ * The Velt `color` function, with multiple aliases. Converts a string (optionally from a template literal) to its colored version.
+ */
+export const c: Color;
 
 export default velt;
