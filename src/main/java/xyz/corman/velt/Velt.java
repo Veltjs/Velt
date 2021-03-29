@@ -8,7 +8,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
@@ -334,6 +336,13 @@ public class Velt extends JavaPlugin implements Listener {
 		Events.getInstance().clearConsumers();
 		for (VeltCommand command : Utils.commands) {
 			command.unregister(Utils.getCommandMap());
+		}
+		Map<String, org.bukkit.command.Command> knownCommands = Utils.getKnownCommands();
+		for (Iterator<org.bukkit.command.Command> i = knownCommands.values().iterator(); i.hasNext(); ) {
+			org.bukkit.command.Command cmd = i.next();
+			if (cmd instanceof VeltCommand) {
+				i.remove();
+			}
 		}
 		Utils.commands.clear();
 		Server server = Bukkit.getServer();

@@ -226,9 +226,10 @@ const commands = {
             }
         }
 
-        const newArgs = [];
+        let newArgs = [ ...args ];
 
         if (current?.args != null) {
+            newArgs = [];
             const msgs = handleMessages(argOpts);
             const argList = [];
             let count = 0;
