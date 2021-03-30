@@ -186,21 +186,64 @@ type OptionalArg = { type: 'optional', value: SimpleArg };
 type Arg = OptionalArg | SpreadArg | SimpleArg;
 
 interface BaseCommand {
+	/**
+	 * The name of the command
+	 */
 	name?: string;
+	/**
+	 * The argument typings for the command, for example: `[ 'player', 'number' ]`. Don't worry about this if you're using arguments in your name, eg. `add (number) (number)`.
+	 */
 	args?: Arg[];
+	/**
+	 * If the console runs the command, reject it, optionally with a message.
+	 */
 	playerOnly?: string | boolean;
+	/**
+	 * The permission to test for
+	 */
 	permission?: string;
+	/**
+	 * The optional message to send if the sender doesn't have the permission
+	 */
 	permissionMessage?: string;
+	/**
+	 * `argOpts`, for customizing messages when using the command args system. (eg. `add (number) (number)` or `args: ['number', 'number']`
+	 */
 	argOpts?: ArgOpts,
+	/**
+	 * An array of subcommands of this command
+	 */
 	subs: BaseCommand[];
+	/**
+	 * The method to handle tab completing this command
+	 * @param sender The sender who is tab completing
+	 * @param args The arguments from tab completing so far
+	 */
 	tabComplete?(sender: any, args: (string | any)[]): string[];
+	/**
+	 * The method to run this command
+	 * @param sender The sender who is running this command
+	 * @param args The arguments this command was run with
+	 */
 	run?(sender: any, args: (string | any)[]): string | boolean | void;
 }
 
 interface Command extends BaseCommand {
+	/**
+	 * The description of this command
+	 */
 	description?: string;
+	/**
+	 * The usage of this command
+	 */
 	usage?: string;
+	/**
+	 * An array of aliases for this command
+	 */
 	aliases?: string[];
+	/**
+	 * The label for this command. Defaults to `velt`
+	 */
 	label?: string;
 }
 
