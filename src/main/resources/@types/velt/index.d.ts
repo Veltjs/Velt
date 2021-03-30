@@ -173,6 +173,37 @@ interface Events {
 	handleEvent(event: any): void;
 }
 
+interface ArgOpts {
+	requiredArg?: (index: number) => string;
+	spreadTypeFailure?: (index: number, type: string) => string;
+	typeFail?: (index: number, type: string, value: string) => string;
+	maxFail?: (givenArgs: number, maxArgs: number) => string;
+}
+
+type SimpleArg = { type: 'simple', value: string } | string;
+type SpreadArg = { type: 'spread', value: SimpleArg };
+type OptionalArg = { type: 'optional', value: SimpleArg };
+type Arg = OptionalArg | SpreadArg | SimpleArg;
+
+interface BaseCommand {
+	name?: string;
+	args?: Arg[];
+	playerOnly?: string | boolean;
+	permission?: string;
+	permissionMessage?: string;
+	argOpts?: ArgOpts,
+	subs: BaseCommand[];
+	tabComplete?(sender: any, args: (string | any)[]): string[];
+	run?(sender: any, args: (string | any)[]): string | boolean | void;
+}
+
+interface Command extends BaseCommand {
+	description?: string;
+	usage?: string;
+	aliases?: string[];
+	label?: string;
+}
+
 /**
  * The wrapper around commands provided by Velt.
  */
@@ -204,9 +235,9 @@ interface Commands {
 	 * Create a command with the given callback, name, and options.
 	 */
 	create(callback: (...args: string[]) => any): CommandAddon;
-	create(opts: {}): CommandAddon;
+	create(opts: Command): CommandAddon;
 	create(name: string, callback: (sender: any, ...args: string[]) => any): CommandAddon;
-	create(name: string, callback: (sender: any, ...args: string[]) => any, opts: {}): CommandAddon;
+	create(name: string, callback: (sender: any, ...args: string[]) => any, opts: Command): CommandAddon;
 	/**
 	 * Check if any given sender is the console.
 	 * @param sender The sender to check

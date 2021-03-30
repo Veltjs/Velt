@@ -47,18 +47,34 @@ const events = {
     once(...args) {
         switch (args.length) {
             case 3:
+                if (typeof args[2] === 'function') {
+                    return this.once({
+                        type: args[0],
+                        condition: args[1],
+                        run: args[2]
+                    });
+                }
                 return this.once({
                     type: args[0],
                     condition: args[1],
-                    run: args[2]
-                });
+                    ...args[2]
+                })
             case 2:
                 return this.once({
                     type: args[0],
                     condition: () => true
                 })
             case 1: {
-                let { type, condition, run } = args[0];
+                let { type, condition, run, limit } = args[0];
+                if (limit) {
+                    return Promise.resolve({
+                        get *matches() {
+                            for (let i = 0; i < limit; i++) {
+                                yield this.once({ type, condition });
+                            }
+                        }
+                    });
+                }
                 const types = this.handleType(type);
                 if (run && condition) {
                     this.waiting.push({ types, condition, run });

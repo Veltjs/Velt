@@ -44,7 +44,6 @@ public class ContextCreation {
                 .allowNativeAccess(true)
                 .allowCreateThread(true)
                 .allowCreateProcess(true)
-                .allowAllAccess(true)
                 .options(options)
                 .build();
 		return context;
