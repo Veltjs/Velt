@@ -7,7 +7,7 @@
  * @module
  */
 
-import {Item} from "./misc";
+import { Item } from './misc';
 
 /**
  * The Velt `color` function, with multiple aliases. Converts a string (optionally from a template literal) to its colored version.
