@@ -144,11 +144,13 @@ export class Nothing extends Item<undefined> {
 }
 
 export class Storage<T> extends Item<T> {
-    constructor(path: string, opts?: {});
+    constructor(path: string, opts?: {
+        default?: T
+    });
     _get(): T;
     set(val: T): this;
     save(path: string, callback?: () => any): Promise<any>;
-    static createConfig<T>(path: string, data: any, opts?: {}): Storage<T>;
+    static createConfig<T>(path: string, data: T, opts?: {}): Storage<T>;
 }
 
 export class Field<T> extends Item<T> {

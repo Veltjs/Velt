@@ -9,15 +9,19 @@ const infoMsg = c`
 &b/velt eval &8| &fEvaluate JavaScript code in-game
 &8-----------`;
 
-function reload(sender) {
-    sender.sendMessage(c`&5&lVelt &8| &bReloading all scripts.`);
-    try {
-        plugin.reload();
-        sender.sendMessage(c`&5&lVelt &8| &aReloaded all scripts.`);
-    } catch (err) {
-        sender.sendMessage(c(`&c${err}`));
+const reload = {
+    permission: 'velt.reload',
+    permissionMessage: c`&5&lVelt &8| &cYou do not have the permissions to reload all scripts.`,
+    run(sender) {
+        sender.sendMessage(c`&5&lVelt &8| &bReloading all scripts.`);
+        try {
+            plugin.reload();
+            sender.sendMessage(c`&5&lVelt &8| &aReloaded all scripts.`);
+        } catch (err) {
+            sender.sendMessage(c(`&c${err}`));
+        }
     }
-}
+};
 
 commands.create('velt', {
     argParser: null,

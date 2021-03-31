@@ -94,8 +94,8 @@ interface WaitForOpts {
  * The `CommandAddon` object, for changing the tab completion method, or command execution method.
  */
 interface CommandAddon {
-	tabComplete(...args: string[]): string[];
-	run(sender: any, ...args: string[]): any;
+	tabComplete(callback: TabCallback): CommandAddon;
+	run(callback: CmdCallback): CommandAddon;
 }
 
 /**
@@ -185,6 +185,9 @@ type SpreadArg = { type: 'spread', value: SimpleArg };
 type OptionalArg = { type: 'optional', value: SimpleArg };
 type Arg = OptionalArg | SpreadArg | SimpleArg;
 
+type CmdCallback = (sender: any, ...args: (string | any)[]) => string | boolean | void;
+type TabCallback = (sender: any, ...args: (string | any)[]) => string[];
+
 interface BaseCommand {
 	/**
 	 * The name of the command
@@ -213,19 +216,21 @@ interface BaseCommand {
 	/**
 	 * An array of subcommands of this command
 	 */
-	subs: BaseCommand[];
+	subs?: {
+		[prop: string]: BaseCommand | CmdCallback;
+	}
 	/**
 	 * The method to handle tab completing this command
 	 * @param sender The sender who is tab completing
 	 * @param args The arguments from tab completing so far
 	 */
-	tabComplete?(sender: any, args: (string | any)[]): string[];
+	tabComplete?: TabCallback;
 	/**
 	 * The method to run this command
 	 * @param sender The sender who is running this command
 	 * @param args The arguments this command was run with
 	 */
-	run?(sender: any, args: (string | any)[]): string | boolean | void;
+	run?: CmdCallback;
 }
 
 interface Command extends BaseCommand {
@@ -279,8 +284,8 @@ interface Commands {
 	 */
 	create(callback: (...args: string[]) => any): CommandAddon;
 	create(opts: Command): CommandAddon;
-	create(name: string, callback: (sender: any, ...args: string[]) => any): CommandAddon;
-	create(name: string, callback: (sender: any, ...args: string[]) => any, opts: Command): CommandAddon;
+	create(name: string, opts: Command | CmdCallback): CommandAddon;
+	create(name: string, callback: CmdCallback, opts: Command): CommandAddon;
 	/**
 	 * Check if any given sender is the console.
 	 * @param sender The sender to check
@@ -435,6 +440,10 @@ interface Scripts {
 	path(...paths: string[]): string;
 }
 
+type CastLocation = { x: number, y: number, z: number, world: any, yaw?: number, pitch?: number } | object;
+
+type CastVector = { x: number, y: number, z: number } | object;
+
 /**
  * Velt's Casting Manager
  */
@@ -448,12 +457,12 @@ interface Cast {
 	 * Convert an object to a location
 	 * @param obj The object to cast as a location
 	 */
-	asLocation(obj: any): any;
+	asLocation(loc: CastLocation): any;
 	/**
 	 * Convert an object to a vector
 	 * @param obj The object to cast to a vector
 	 */
-	asVector(obj: any): any;
+	asVector(obj: CastVector): any;
 	/**
 	 * Convert an object to an itemstack
 	 * @param obj The object to cast to an itemstack
