@@ -7,6 +7,8 @@
  * @module
  */
 
+import { Item } from './misc';
+
 /**
  * The Velt `color` function, with multiple aliases. Converts a string (optionally from a template literal) to its colored version.
  */
@@ -293,6 +295,12 @@ interface Commands {
 	isConsole(sender: any): boolean;
 }
 
+interface SkullOpts {
+	count?: number;
+	name?: string;
+	lore?: string[] | string;
+}
+
 /**
  * The wrapper around the server provided by Velt.
  */
@@ -359,7 +367,7 @@ interface Server {
 	/**
 	 * Get an itemstack from the material name and the options.
 	 */
-	itemstack(material: string, opts?: {} | string): any;
+	itemstack(material: string | Item, opts?: {} | string): any;
 	/**
 	 * Get a skull from the UUID of the player  who owned it.
 	 * @param uuid The UUID of the player who's skin represents the skull.
@@ -370,7 +378,7 @@ interface Server {
 	 * @param player The player whose skull to get.
 	 * @param opts The options
 	 */
-	skull(player, opts: {}): any;
+	skull(player, opts: SkullOpts): any;
 	/**
 	 * Wait a specific amount of time before doing something else asynchronously.
 	 * @param delay The delay to wait.
