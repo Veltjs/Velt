@@ -57,7 +57,7 @@ export class Gui {
      * @param item The item to add to that slot of the GUI
      * @param options The options, or the callback run when the slot is clicked.
      */
-    set(slot: number, item: any, options: GuiOptions): this;
+    set(slot: number, item: Item, options: GuiOptions): this;
     /**
      * Set the item at the given slot of the GUI, with an optional callback with the options
      * @param slot The slot of the GUI to set
@@ -65,7 +65,7 @@ export class Gui {
      * @param options The options, or the callback run when the slot is clicked.
      * @alias set
      */
-    format(slot: number, item: any, options: GuiOptions): this;
+    format(slot: number, item: Item, options: GuiOptions): this;
     /**
      * Clear or unset a specific slot of this GUI
      * @param slot The slot to unset
@@ -361,9 +361,9 @@ export interface Crafting {
      *
      */
     createShapedRecipe(options: {
-        items: any;
+        items: string;
         shape: string[];
-        result: string
+        result: Item
     }, namespace: string): {
         /** Remove this recipe from the server. */
         delete(): void;
@@ -374,7 +374,7 @@ export interface Crafting {
      * @param output the result of the crafting
      * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
      */
-    createShapelessRecipe(input: any[], output: any, namespace?: string): {
+    createShapelessRecipe(input: string[], output: Item, namespace?: string): {
         /** Remove this recipe from the server. */
         delete(): void;
     }
@@ -386,7 +386,7 @@ export interface Crafting {
      * @param cookingTime the amount of ticks it takes to cook
      * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
      */
-    createFurnaceRecipe(input: any, output: any, xp?: number, cookingTime?: number, namespace?: string): {
+    createFurnaceRecipe(input: string, output: Item, xp?: number, cookingTime?: number, namespace?: string): {
         /** Remove this recipe from the server. */
         delete(): void;
     }
@@ -398,7 +398,7 @@ export interface Crafting {
      * @param cookingTime the amount of ticks it takes to cook
      * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
      */
-    createBlastingRecipe(input: any, output: any, xp?: number, cookingTime?: number, namespace?: string): {
+    createBlastingRecipe(input: string, output: Item, xp?: number, cookingTime?: number, namespace?: string): {
         /** Remove this recipe from the server. */
         delete(): void;
     }
@@ -410,7 +410,7 @@ export interface Crafting {
      * @param cookingTime the amount of ticks it takes to cook
      * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
      */
-    createCampfireRecipe(input: any, output: any, xp?: number, cookingTime?: number, namespace?: string): {
+    createCampfireRecipe(input: string, output: Item, xp?: number, cookingTime?: number, namespace?: string): {
         /** Remove this recipe from the server. */
         delete(): void;
     }
@@ -422,7 +422,7 @@ export interface Crafting {
      * @param cookingTime the amount of ticks it takes to cook
      * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
      */
-    createSmokingRecipe(input: any, output: any, xp?: number, cookingTime?: number, namespace?: string): {
+    createSmokingRecipe(input: string, output: Item, xp?: number, cookingTime?: number, namespace?: string): {
         /** Remove this recipe from the server. */
         delete(): void;
     }
@@ -433,7 +433,7 @@ export interface Crafting {
      * @param output the result of the smithing
      * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
      */
-    createSmithingRecipe(input: any, input2: any, output: any, namespace?: string): {
+    createSmithingRecipe(input: string, input2: string, output: Item, namespace?: string): {
         /** Remove this recipe from the server. */
         delete(): void;
     }
@@ -500,7 +500,7 @@ interface BossBarMethods {
     visible: boolean;
 }
 
-type EquipItem = { item: any, dropChance: number } | any;
+type EquipItem = { item: Item, dropChance: number } | any;
 
 type shoot =  (entity: any, proj: string, opts?: ShootOpts) => any;
 type lookingAt = (entity: any, range?: number) => any;
@@ -510,7 +510,7 @@ type give = (entity: any, ...items: any[]) => void;
 type attrs = (entity: any) => { [ prop: string ]: any };
 type equip = (entity: any, equipment: Equipment) => void;
 type swap = (entity: any, other: any) => void;
-type drop = (item: any, loc: any) => void;
+type drop = (item: Item, loc: any) => void;
 type distBetween = (start: any, end: any) => number;
 
 /**
