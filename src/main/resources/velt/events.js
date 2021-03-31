@@ -68,10 +68,13 @@ const events = {
                 let { type, condition, run, limit } = args[0];
                 if (limit) {
                     return Promise.resolve({
-                        get *matches() {
-                            for (let i = 0; i < limit; i++) {
-                                yield this.once({ type, condition });
+                        get matches() {
+                            const getMatches = function* () {
+                                for (let i = 0; i < limit; i++) {
+                                    yield this.once({ type,  });
+                                }
                             }
+                            return getMatches();
                         }
                     });
                 }

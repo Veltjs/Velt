@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.EnvironmentAccess;
 import org.graalvm.polyglot.HostAccess;
 
 public class ContextCreation {
@@ -31,6 +32,24 @@ public class ContextCreation {
 			"buffer:lib/buffer,util:lib/util,querystring:lib/querystring,string_decoder:lib/string_decoder,url:lib/url,console:lib/console,http:lib/http," +
 			"https:lib/https,stream:lib/stream,zlib:lib/zlib,process:lib/process"
 		);*/
+	}
+	public static Context createSecureContext(Map<String, String> options) {
+		HostAccess hostAccess = HostAccess.newBuilder(HostAccess.NONE)
+				.targetTypeMapping(Double.class, Float.class, null, x -> x.floatValue())
+				.build();
+		Context context = Context.newBuilder("js")
+				.allowExperimentalOptions(false)
+				.allowIO(false)
+				.allowCreateProcess(false)
+				.allowCreateThread(false)
+				.allowHostClassLookup(c -> {
+					return false;
+				})
+				.allowNativeAccess(false)
+				.allowEnvironmentAccess(EnvironmentAccess.NONE)
+				.options(options)
+				.build();
+		return context;
 	}
 	public static Context createContext(Map<String, String> options) {
 		HostAccess hostAccess = HostAccess.newBuilder(HostAccess.ALL)

@@ -713,7 +713,7 @@ function bossBar(bossbar) {
     }
 }
 
-/** Unexported utility for creating a NamespacedKey. */
+/** Internal utility for creating a NamespacedKey. */
 function namespacedKey(input) {
     return new NamespacedKey(plugin, input.replace(/((?![a-z0-9._-]+).)*/g, ''));
 }
