@@ -7,7 +7,7 @@
  * @module
  */
 
-import { Item } from './misc';
+import { Item as VeltItem } from './misc';
 
 /**
  * The options of the direction, speed, and shooter for the `shoot` call.
@@ -59,7 +59,7 @@ export class Gui {
      * @param item The item to add to that slot of the GUI
      * @param options The options, or the callback run when the slot is clicked.
      */
-    set(slot: number, item: Item, options: GuiOptions): this;
+    set(slot: number, item: VeltItem, options: GuiOptions): this;
     /**
      * Set the item at the given slot of the GUI, with an optional callback with the options
      * @param slot The slot of the GUI to set
@@ -67,7 +67,7 @@ export class Gui {
      * @param options The options, or the callback run when the slot is clicked.
      * @alias set
      */
-    format(slot: number, item: Item, options: GuiOptions): this;
+    format(slot: number, item: VeltItem, options: GuiOptions): this;
     /**
      * Clear or unset a specific slot of this GUI
      * @param slot The slot to unset
@@ -356,16 +356,14 @@ export class Direction {
 export interface Crafting {
     /**
      * Create a shaped crafting recipe.
-     * @param items the items, formatted by `{ letter: item }`
-     * @param shape an array of item keys, corresponding with the position in the crafting table
-     * @param result the output of the crafting recipe
+     * @param options The options to make this recipe with (the items, shape and result)
      * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
      *
      */
     createShapedRecipe(options: {
         items: string;
         shape: string[];
-        result: Item
+        result: VeltItem
     }, namespace: string): {
         /** Remove this recipe from the server. */
         delete(): void;
@@ -376,7 +374,7 @@ export interface Crafting {
      * @param output the result of the crafting
      * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
      */
-    createShapelessRecipe(input: string[], output: Item, namespace?: string): {
+    createShapelessRecipe(input: string[], output: VeltItem, namespace?: string): {
         /** Remove this recipe from the server. */
         delete(): void;
     }
@@ -388,7 +386,7 @@ export interface Crafting {
      * @param cookingTime the amount of ticks it takes to cook
      * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
      */
-    createFurnaceRecipe(input: string, output: Item, xp?: number, cookingTime?: number, namespace?: string): {
+    createFurnaceRecipe(input: string, output: VeltItem, xp?: number, cookingTime?: number, namespace?: string): {
         /** Remove this recipe from the server. */
         delete(): void;
     }
@@ -400,7 +398,7 @@ export interface Crafting {
      * @param cookingTime the amount of ticks it takes to cook
      * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
      */
-    createBlastingRecipe(input: string, output: Item, xp?: number, cookingTime?: number, namespace?: string): {
+    createBlastingRecipe(input: string, output: VeltItem, xp?: number, cookingTime?: number, namespace?: string): {
         /** Remove this recipe from the server. */
         delete(): void;
     }
@@ -412,7 +410,7 @@ export interface Crafting {
      * @param cookingTime the amount of ticks it takes to cook
      * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
      */
-    createCampfireRecipe(input: string, output: Item, xp?: number, cookingTime?: number, namespace?: string): {
+    createCampfireRecipe(input: string, output: VeltItem, xp?: number, cookingTime?: number, namespace?: string): {
         /** Remove this recipe from the server. */
         delete(): void;
     }
@@ -424,7 +422,7 @@ export interface Crafting {
      * @param cookingTime the amount of ticks it takes to cook
      * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
      */
-    createSmokingRecipe(input: string, output: Item, xp?: number, cookingTime?: number, namespace?: string): {
+    createSmokingRecipe(input: string, output: VeltItem, xp?: number, cookingTime?: number, namespace?: string): {
         /** Remove this recipe from the server. */
         delete(): void;
     }
@@ -435,7 +433,7 @@ export interface Crafting {
      * @param output the result of the smithing
      * @param namespace the name of this item to register under velt, isn't necessary unless conflicts
      */
-    createSmithingRecipe(input: string, input2: string, output: Item, namespace?: string): {
+    createSmithingRecipe(input: string, input2: string, output: VeltItem, namespace?: string): {
         /** Remove this recipe from the server. */
         delete(): void;
     }

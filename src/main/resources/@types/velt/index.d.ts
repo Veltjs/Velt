@@ -61,7 +61,13 @@ interface Velt {
 /**
  * The Velt `Time` type.
  */
-type Time = number | {};
+type Time = {
+	ticks?: number,
+	seconds?: number,
+	minutes?: number,
+	hours?: number,
+	days?: number
+} | number;
 
 /**
  * A scheduler object provided by Velt.
@@ -449,9 +455,7 @@ interface Scripts {
 }
 
 type CastLocation = { x: number, y: number, z: number, world: any, yaw?: number, pitch?: number } | object;
-
 type CastVector = { x: number, y: number, z: number } | object;
-
 /**
  * Velt's Casting Manager
  */
@@ -475,12 +479,12 @@ interface Cast {
 	 * Convert an object to an itemstack
 	 * @param obj The object to cast to an itemstack
 	 */
-	asItemStack(obj: any): any;
+	asItemStack(obj: Item): any;
 	/**
 	 * Convert an object to a number of ticks
 	 * @param obj The object to convert to a number of ticks
 	 */
-	asTicks(obj: any): number;
+	asTicks(obj: Time): number;
 	/**
 	 * Convert an object (generally a string) to an online player.
 	 * @param obj The object to convert to a player
