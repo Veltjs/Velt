@@ -193,7 +193,13 @@ require = (function() {
 					}
 					if (!ts) {
 						const start = new Date()
-						console.error('TypeScript Support is Experimental - Please do not use it in producdtion!');
+						const info = [
+							'='.repeat(25),
+							'Velt TypeScript Support is Experimental - Please do not use it in production!',
+							'TypeScript with Velt only transpiles, it does not type-check your code',
+							'='.repeat(25)
+						].join('\n');
+						console.error(info);
 						console.log('Loading Typescript module...');
 						ts = require('typescript');
 						const end = new Date();
