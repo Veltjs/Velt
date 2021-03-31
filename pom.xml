@@ -3,8 +3,8 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>xyz.corman.velt</groupId>
 	<artifactId>Velt</artifactId>
-	<version>0.1.2-alpha</version>
-	<packaging>jar   </packaging>
+	<version>0.2.0-alpha</version>
+	<packaging>jar</packaging>
 	<dependencies>
 		<dependency>
 			<groupId>org.spigotmc</groupId>
