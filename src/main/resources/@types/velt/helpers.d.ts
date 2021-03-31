@@ -7,6 +7,8 @@
  * @module
  */
 
+import { Item } from './misc';
+
 /**
  * The options of the direction, speed, and shooter for the `shoot` call.
  */
