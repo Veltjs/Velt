@@ -1,6 +1,6 @@
 const { server, events, cast, plugin, internals: { capitalize, javaArrToJSArr, JSArrToJavaArr, JSArrToJavaList } } = require('velt');
 const Utils = Java.type('xyz.corman.velt.Utils');
-const { Bukkit, Location, NamespacedKey } = Java.pkg('org.bukkit');
+const { Bukkit, Location, Sound, SoundCategory, NamespacedKey } = Java.pkg('org.bukkit');
 const PotionEffectType = Java.type('org.bukkit.potion.PotionEffectType');
 const DisplaySlot = Java.type('org.bukkit.scoreboard.DisplaySlot');
 const { Entity, LivingEntity, Player, Projectile } = Java.pkg('org.bukkit.entity');
@@ -718,6 +718,41 @@ function namespacedKey(input) {
     return new NamespacedKey(plugin, input.replace(/((?![a-z0-9._-]+).)*/g, ''));
 }
 
+const sound = {
+	play(loc, sound, opts) {
+		loc = cast.asLocation(loc);
+		const world = loc.getWorld();
+		const effect = Sound.valueOf(server.unformat(sound));
+		if (opts.category) {
+			const category = SoundCategory.valueOf(server.unformat(opts.category));
+			world.playSound(loc, effect, category, opts.volume ?? 1, opts.pitch);
+		} else {
+			world.playSound(loc, effect, opts.volume ?? 1, opts.pitch);
+		}
+	},
+	playForPlayer(...args) {
+		if (args.length === 3) {
+			const player = cast.asPlayer(args[0]);
+			return sound.playForPlayer(player, player.getLocation(), args[2]);
+		}
+		const [ player, loc, sound, opts ] = args;
+		loc = cast.asLocation(loc);
+		const effect = Sound.valueOf(server.unformat(sound));
+		if (opts.category) {
+			const category = SoundCategory.valueOf(server.unformat(opts.category));
+			player.playSound(loc, effect, category, opts.volume ?? 1, opts.pitch);
+		} else {
+			player.playSound(loc, effect, opts.volume ?? 1, opts.pitch);
+		}
+	}
+}
+
+sound.play(loc, 'click2', {
+	volume,
+	pitch,
+	category //optional
+});
+
 module.exports = {
 	shoot,
 	lookingAt,
@@ -737,5 +772,6 @@ module.exports = {
 	Item,
 	Direction,
 	crafting,
-	bossbar
+	bossbar,
+	sound
 };
