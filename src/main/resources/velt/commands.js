@@ -106,6 +106,7 @@ const commands = {
             match: (sender, arg) => arr.map(i => i.toLowerCase()).includes(arg.toLowerCase())
         });
     },
+    Unspecified: Symbol('Unspecified'),
     getType(type) {
         switch (type.type) {
             case 'simple':
@@ -118,7 +119,7 @@ const commands = {
                 return {
                     type: `${val.type}?`,
                     tabComplete: val.tabComplete,
-                    match: (sender, arg) => arg == null ? null : val.match == null ? null : val.match(sender, arg)
+                    match: (sender, arg) => arg == null ? commands.Unspecified : val.match == null ? commands.Unspecified : val.match(sender, arg)
                 };
             }
             case 'spread': {
@@ -261,10 +262,14 @@ const commands = {
                     }
                     const matched = argument.match(sender, val);
                     if (matched !== false && matched !== undefined) {
-                        if (argType.type === 'spread') {
-                            newArgs.push(...matched);
-                        } else {
-                            newArgs[index] = matched;
+                        switch (argType) {
+                            case 'spread':
+                                newArgs.push(...matched);
+                                break;
+                            default:
+                                if (matched !== commands.Unspecified) {
+                                    newArgs[index] = matched; //If the optional value is unspecified, don't save it to newArgs.
+                                }
                         }
                     } else {
                         const end = ending(index + 1);
