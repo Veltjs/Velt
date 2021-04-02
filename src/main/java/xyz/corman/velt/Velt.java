@@ -390,6 +390,7 @@ public class Velt extends JavaPlugin implements Listener {
 					context.eval(fromString("load('" + loaderPath + "')", "velt-loader.js"));
 					log.info("Loading scripts");
 					context.eval(fromString("require('globals')", "globals.js"));
+					context.eval(fromString("require('velt/setup')", "globals.js"));
 					for (File file : scriptsFolder.listFiles()) {
 						String path = file.getAbsolutePath();
 						String fileName = file.getPath();
