@@ -481,6 +481,9 @@ class Item {
             give(player, this.itemstack);
         }
     }
+    isItem(other) {
+    	return other.isSimilar(this.itemstack);
+	}
 }
 
 class Direction {
