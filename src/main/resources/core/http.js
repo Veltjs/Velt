@@ -1,5 +1,3 @@
-const http = (module.exports = {});
-
 const METHODS = [
 	"GET",
 	"HEAD",
@@ -11,6 +9,29 @@ const METHODS = [
 	"TRACE",
 	"PATCH",
 	"TRACK",
+];
+
+const FORBIDDEN_HEADER_NAMES = [
+	"Accept-Charset",
+	"Accept-Encoding",
+	"Access-Control-Request-Headers",
+	"Access-Control-Request-Method",
+	"Connection",
+	"Content-Length",
+	"Cookie",
+	"Cookie2",
+	"Date",
+	"DNT",
+	"Expect",
+	"Host",
+	"Keep-Alive",
+	"Origin",
+	"Referer",
+	"TE",
+	"Trailer",
+	"Transfer-Encoding",
+	"Upgrade",
+	"Via",
 ];
 
 const urlRegex = /((([A-Za-z]{3,9}:(?:\/\/)?)(?:[\-;:&=\+\$,\w]+@)?[A-Za-z0-9\.\-]+|(?:www\.|[\-;:&=\+\$,\w]+@)[A-Za-z0-9\.\-]+)((?:\/[\+~%\/\.\w\-_]*)?\??(?:[\-\+=&;%@\.\w_]*)#?(?:[\.\!\/\\\w]*))?)/;
@@ -56,12 +77,13 @@ class XMLHttpRequest extends XMLHttpRequestEventTarget {
 
 		this.readyState = XMLHttpRequest.UNSENT;
 
+		this.sendFlag = null;
 		this.timeout = 0;
 		this.withCredentials = null;
 
 		this.requestMethod = "GET";
 		this.requestURL = null;
-		this.requestHeaders = null;
+		this.requestHeaders = {};
 		this.requestBody = null;
 
 		this.synchronous = null;
@@ -85,16 +107,26 @@ class XMLHttpRequest extends XMLHttpRequestEventTarget {
 		this.mimeType = null;
 	}
 
+	/**
+	 * @param {string} method
+	 * @param {string} url
+	 * @param {boolean} async
+	 * @param {string} username
+	 * @param {string} password
+	 */
 	open(method, url, async, username = null, password = null) {
+		if (method === undefined || url === undefined)
+			throw new TypeError("Too few arguments.");
+
 		this.method = method;
 		this.requestURL = url;
 		this.synchronous = !async;
 
-		if (!METHODS.includes(method.toUpperCase()))
+		if (typeof method !== "string" || !METHODS.includes(method.toUpperCase()))
 			throw new SyntaxError(`'${method}' is not a valid HTTP method.`);
-		if (!url.match(urlRegex))
+		if (typeof url !== "string" || !url.match(urlRegex))
 			throw new SyntaxError(`'${url}' is not a valid URL.`);
-		if (["CONNECT", "TRACE", "TRACK"].includes(method))
+		if (["CONNECT", "TRACE", "TRACK"].includes(method.toUpperCase()))
 			throw new Error(`'${method}' HTTP method is unsupported.`);
 		if (
 			!async &&
@@ -105,13 +137,94 @@ class XMLHttpRequest extends XMLHttpRequestEventTarget {
 
 		method = method.toUpperCase();
 
-		const parsedURL = url;
+		const URL = Java.pkg("java.net.URL");
+
+		const parsedURL = new URL(url);
 
 		if (async === undefined) {
 			async = true;
 			username = null;
 			password = null;
 		}
+
+		// TODO AUTH STUFF
+		// if (parsedURL.getHost()) {
+		// 	if (username) {
+		// 	}
+		// }
+
+		if (
+			async === false &&
+			typeof window !== "undefined" &&
+			(this.timeout !== 0 || this.responseType !== "")
+		)
+			throw new DOMException("Invalid access.");
+
+		this.uploadListener = null;
+		this.requestMethod = method;
+		this.requestURL = parsedURL;
+		this.synchronous = async ? null : true;
+		this.requestHeaders = {};
+		this.response = new Error("Network error.");
+		this.responseBytes = [];
+		this.responseObject = null;
+
+		if (this.readyState !== XMLHttpRequest.OPENED) {
+			this.state = XMLHttpRequest.OPENED;
+			if (
+				this.onreadystatechange &&
+				typeof this.onreadystatechange === "function"
+			)
+				this.onreadystatechange();
+		}
+	}
+
+	/**
+	 * @param {string} name
+	 * @param {string} value
+	 */
+	setRequestHeader(name, value) {
+		if (this.state !== XMLHttpRequest.OPENED) throw new Error("Invalid state.");
+		if (this.sendFlag) throw new Error("Invalid state.");
+		value = value.trim();
+		if (typeof name !== "string" || typeof value !== "string")
+			throw new SyntaxError("Invalid type(s).");
+		if (FORBIDDEN_HEADER_NAMES.includes("name")) return;
+		if (this.requestHeaders[name] !== undefined) {
+			this.requestHeaders[name] =
+				this.requestHeaders[name] +
+				String.fromCharCode(0x2c) +
+				String.fromCharCode(0x20) +
+				value;
+		} else this.requestHeaders[name] = value;
+	}
+
+	get timeout() {
+		return this.timeout;
+	}
+
+	set timeout(value) {
+		if (typeof window !== "undefined" && this.synchronous)
+			throw new Error("Invalid access.");
+		this.timeout = value;
+	}
+
+	get withCredentials() {
+		return this.withCredentials;
+	}
+
+	set withCredentials(value) {
+		if (
+			this.readyState !== XMLHttpRequest.UNSENT &&
+			this.readyState !== XMLHttpRequest.OPENED
+		)
+			throw new Error("Invalid state.");
+		if (this.sendFlag) throw new Error("Invalid state.");
+		this.withCredentials = value;
+	}
+
+	get upload() {
+		return this.upload;
 	}
 
 	send(body = null) {}
@@ -130,3 +243,7 @@ XMLHttpRequest.OPENED = 1;
 XMLHttpRequest.HEADERS_RECEIVED = 2;
 XMLHttpRequest.LOADING = 3;
 XMLHttpRequest.DONE = 4;
+
+module.exports = {
+	XMLHttpRequest,
+};
