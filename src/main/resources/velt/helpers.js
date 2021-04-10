@@ -1,6 +1,6 @@
 const { server, events, cast, plugin, internals: { capitalize, javaArrToJSArr, JSArrToJavaArr, JSArrToJavaList } } = require('velt');
 const Utils = Java.type('xyz.corman.velt.Utils');
-const { Bukkit, Location, Sound, SoundCategory, NamespacedKey } = Java.pkg('org.bukkit');
+const { Bukkit, Location, Particle, Sound, SoundCategory, NamespacedKey } = Java.pkg('org.bukkit');
 const PotionEffectType = Java.type('org.bukkit.potion.PotionEffectType');
 const DisplaySlot = Java.type('org.bukkit.scoreboard.DisplaySlot');
 const { Entity, LivingEntity, Player, Projectile } = Java.pkg('org.bukkit.entity');
@@ -722,39 +722,70 @@ function namespacedKey(input) {
 }
 
 const sound = {
+	getSound(sound) {
+		if (typeof sound === 'string') {
+			return Sound.valueOf(server.unformat(sound));
+		} else {
+			return sound;
+		}
+	},
+	playSoundFor(obj, loc, effect, opts) {
+		if (opts.category) {
+			const category = SoundCategory.valueOf(server.unformat(opts.category));
+			obj.playSound(loc, effect, category, opts.volume ?? 1, opts.pitch);
+		} else {
+			obj.playSound(loc, effect, opts.volume ?? 1, opts.pitch);
+		}
+	},
 	play(loc, sound, opts) {
 		loc = cast.asLocation(loc);
 		const world = loc.getWorld();
-		const effect = Sound.valueOf(server.unformat(sound));
-		if (opts.category) {
-			const category = SoundCategory.valueOf(server.unformat(opts.category));
-			world.playSound(loc, effect, category, opts.volume ?? 1, opts.pitch);
-		} else {
-			world.playSound(loc, effect, opts.volume ?? 1, opts.pitch);
-		}
+		const effect = this.getSound(sound);
+		this.playSoundFor(world, loc, effect, opts);
 	},
 	playForPlayer(...args) {
 		if (args.length === 3) {
 			const player = cast.asPlayer(args[0]);
 			return sound.playForPlayer(player, player.getLocation(), args[2]);
 		}
-		const [ player, loc, sound, opts ] = args;
+		let [ player, loc, sound, opts ] = args;
 		loc = cast.asLocation(loc);
-		const effect = Sound.valueOf(server.unformat(sound));
-		if (opts.category) {
-			const category = SoundCategory.valueOf(server.unformat(opts.category));
-			player.playSound(loc, effect, category, opts.volume ?? 1, opts.pitch);
+		const effect = this.getSound(sound);
+		this.playSoundFor(player, loc, effect, opts);
+	}
+};
+
+const particles = {
+	getParticle(particle) {
+		if (typeof particle === 'string') {
+			return Particle.valueOf(server.unformat(particle));
 		} else {
-			player.playSound(loc, effect, opts.volume ?? 1, opts.pitch);
+			return particle;
 		}
+	},
+	show(particle, loc, opts) {
+		particle = this.getParticle(particle);
+		loc.getWorld().spawnParticle(
+			particle,
+			loc,
+			opts.count ?? opts.amount ?? 1,
+			opts.offsetX ?? 0,
+			opts.offsetY ?? 0,
+			opts.offsetZ ?? 0
+		);
+	},
+	showForPlayer(player, particle, loc, opts) {
+		particle = this.getParticle(particle);
+		player.spawnParticle(
+			particle,
+			loc,
+			opts.count ?? opts.amount ?? 1,
+			opts.offsetX ?? 0,
+			opts.offsetY ?? 0,
+			opts.offsetZ ?? 0
+		);
 	}
 }
-
-sound.play(loc, 'click2', {
-	volume,
-	pitch,
-	category //optional
-});
 
 module.exports = {
 	shoot,
@@ -776,5 +807,6 @@ module.exports = {
 	Direction,
 	crafting,
 	bossbar,
-	sound
+	sound,
+	particles
 };

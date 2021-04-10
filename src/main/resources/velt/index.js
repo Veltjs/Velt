@@ -95,8 +95,8 @@ const server = {
         return ItemFlag.valueOf(server.unformat(name));
     },
     itemstack(material, opts = {}) {
-        const {
-            count = 1,
+        let {
+            count = null,
             name = undefined,
             lore = undefined,
             durability = undefined,
@@ -105,6 +105,11 @@ const server = {
             enchantments = [],
             itemflags = []
         } = opts;
+        if (count == null && opts.amount) {
+            count = opts.amount;
+        } else {
+            count = 1;
+        }
         let item;
         let meta;
         if (material instanceof ItemStack) {
