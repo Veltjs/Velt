@@ -100,10 +100,11 @@ const commands = {
         return this;
     },
     createListType(name, arr) {
+        arr = arr.map(i => i.toLowerCase());
         return this.createType({
             type: name,
             tabComplete: () => arr,
-            match: (sender, arg) => arr.map(i => i.toLowerCase()).includes(arg.toLowerCase())
+            match: (sender, arg) => arr.map(i => i.toLowerCase()).includes(arg.toLowerCase()) ? arg : undefined
         });
     },
     Unspecified: Symbol('Unspecified'),

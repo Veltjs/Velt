@@ -237,14 +237,14 @@ const server = {
         }
         let Runnable = Java.extend(BukkitRunnable, {
             run() {
-                for (const call of [ ... callbacks ]) {
+                callbacks.forEach(call => {
                     if (call.type == 'promise') {
                         call.resolve(count);
                         callbacks.splice(callbacks.indexOf(call), 1);
                     } else {
                         call.apply(out, [ count ]);
                     }
-                }
+                });
                 count++;
             }
         });

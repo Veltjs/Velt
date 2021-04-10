@@ -10,14 +10,16 @@ const events = {
     checkTypes(types, event) {
         for (const type of types) {
             if (type == null) continue;
-            if (typeof type === 'function' && event instanceof type) {
+            if (type === this.anyEvent) {
+                return true
+            } else if (typeof type === 'function' && event instanceof type) {
                 return true;
             } else if (type === event.getClass().getSimpleName()) {
                 return true;
             }
         }
     },
-    handleType(type, event) {
+    handleType(type) {
         /*
              Match the type names
              Works in such a way that:
@@ -25,6 +27,11 @@ const events = {
              playerChatEvent -> PlayerChatEvent
              playerChat -> PlayerChatEvent
           */
+        if (type === this.anyEvent) {
+            return [ type ];
+        } else if (Array.isArray(type)) {
+            return type.flatMap(i => this.handleType(i));
+        }
         const newType = type
             .split(/ |_/)
             .map(i => internals.capitalize(i))
@@ -95,22 +102,36 @@ const events = {
             }
         }
     },
+    removeListener(name, callback) {
+        const names = this.handleType(name);
+        this.listeners = this.listeners.filter(i => {
+            if (i.run !== callback) {
+                return true;
+            }
+            for (const name of i.types) {
+                if (names.includes(name)) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    },
     handleEvent(event) {
         /*
             This is bugged - needs further
          */
         try {
-            for (const {types, run} of this.listeners) {
+            this.listeners.forEach(({ types, run }) => {
                 if (this.checkTypes(types, event)) {
                     run(event);
                 }
-            }
-            for (const {types, condition, run} of this.waiting) {
+            });
+            this.waiting.forEach(({ types, condition, run }) => {
                 if (this.checkTypes(types, event) && condition(event)) {
                     run(event);
                     this.waiting = this.waiting.filter(i => i.run !== run);
                 }
-            }
+            });
         } catch (e) {
             console.error(e);
         }
