@@ -406,6 +406,35 @@ let cast = {
         }
         return time;
     },
+    asMilliseconds(obj) {
+        if (Number.isInteger(obj)) return obj;
+        let time = 0;
+        if (obj.ms) {
+            time += obj.ms;
+        }
+        if (obj.milliseconds) {
+            time += obj.milliseconds;
+        }
+        if (obj.ticks) {
+            time += obj.ticks * 50;
+        }
+        if (obj.seconds) {
+            time += obj.seconds * 50 * 20;
+        }
+        if (obj.minutes) {
+            time += obj.minutes * 50 * 20 * 60;
+        }
+        if (obj.hours) {
+            time += obj.hours * 50 * 20 * 60 * 60;
+        }
+        if (obj.days) {
+            time += obj.days * 50 * 20 * 60 * 60 * 60;
+        }
+        return time;
+    },
+    asMS(obj) {
+        return this.asMilliseconds(obj);
+    },
     asPlayer(obj) {
         if (obj instanceof Player) {
             return obj;

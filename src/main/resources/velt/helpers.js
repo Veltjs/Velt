@@ -787,6 +787,52 @@ const particles = {
 	}
 }
 
+class CooldownManager {
+	constructor(time) {
+		this.time = cast.asMilliseconds(time);
+		this.cooldowns = {};
+	}
+	cooldownHasPassed(cooldown) {
+		return (new Date() - cooldown) > this.time;
+	}
+	has(name) {
+		const cooldown = this.cooldowns[this.format(name)];
+		if (cooldown == null) {
+			return false;
+		}
+		if (this.cooldownHasPassed(cooldown)) {
+			return false;
+		}
+		return true;
+	}
+	timeLeft(name) {
+		const cooldown = this.cooldowns[this.format(name)];
+		if (cooldown == null) {
+			return null;
+		}
+		if (this.cooldownHasPassed(cooldown)) {
+			return null;
+		}
+		return (this.time - (new Date() - cooldown)) / 1000;
+	}
+	of(name) {
+		return { exists: this.has(name), timeLeft: this.timeLeft(name) };
+	}
+	reset(name) {
+		this.cooldowns[this.format(name)] = new Date();
+	}
+	remove(name) {
+		this.cooldowns[this.format(name)] = null;
+	}
+	format(name) {
+		if (name instanceof Player) {
+			return name.getUniqueId().toString();
+		} else if (typeof name === 'string') {
+			return name;
+		}
+	}
+}
+
 module.exports = {
 	shoot,
 	lookingAt,
@@ -808,5 +854,6 @@ module.exports = {
 	crafting,
 	bossbar,
 	sound,
-	particles
+	particles,
+	CooldownManager
 };
