@@ -6,6 +6,7 @@ const { setTimeout, setInterval, clearTimeout, clearInterval } = require('timers
 const { Buffer } = require('buffer');
 const process = require('process');
 const util = require('util');
+require('table-polyfill');
 
 const _then = Promise.then;
 

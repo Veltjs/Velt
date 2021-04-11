@@ -102,19 +102,28 @@ const events = {
             }
         }
     },
-    removeListener(name, callback) {
-        const names = this.handleType(name);
-        this.listeners = this.listeners.filter(i => {
-            if (i.run !== callback) {
-                return true;
+    removeListener(...args) {
+        switch (args.length) {
+            case 1: {
+                const [ callback ] = args;
+                this.listeners = this.listeners.filter(i => i.run !== callback);
             }
-            for (const name of i.types) {
-                if (names.includes(name)) {
-                    return false;
-                }
+            case 2: {
+                const [ name, callback ] = args;
+                const names = this.handleType(name);
+                this.listeners = this.listeners.filter(i => {
+                    if (i.run !== callback) {
+                        return true;
+                    }
+                    for (const name of i.types) {
+                        if (names.includes(name)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                });
             }
-            return true;
-        });
+        }
     },
     handleEvent(event) {
         /*
