@@ -1,4 +1,4 @@
-const { commands, scripts, c, plugin } = require('./');
+const { commands, server, events, scripts, c, plugin } = require('./');
 const { Storage } = require('./storage');
 
 const infoMsg = c`
@@ -15,13 +15,23 @@ const reload = {
     run(sender) {
         sender.sendMessage(c`&5&lVelt &8| &bReloading all scripts.`);
         try {
-            plugin.reload();
-            sender.sendMessage(c`&5&lVelt &8| &aReloaded all scripts.`);
+            plugin.reload(err => {
+                if (err) {
+                    sender.sendMessage(c`&5&lVelt &8| &fVelt encountered an error while reloading.\n`);
+                    sender.sendMessage(c`&c${err}`);
+                } else {
+                    sender.sendMessage(c`&5&lVelt &8| &aReloaded all scripts.`);
+                }
+            });
         } catch (err) {
-            sender.sendMessage(c(`&c${err}`));
+            sender.sendMessage(c`&5&lVelt &8| &fVelt encountered an error while reloading.\n`);
+            sender.sendMessage(c`&c${err}`);
         }
     }
 };
+
+const promptMessage = player => events.once('PlayerChatEvent', event => event.getPlayer() === player)
+    .then(i => i.getMessage());
 
 commands.create('velt', {
     argParser: null,
@@ -30,8 +40,26 @@ commands.create('velt', {
         help: () => infoMsg,
         reload: reload,
         rl: reload,
+        async repl(sender) {
+            if (!sender.hasPermission('velt.watch')) return c`&5&Velt &8| &cYou don't have the permissions to run this command.`;
+        },
+        watch(sender, path) {
+            if (!sender.hasPermission('velt.watch')) return c`&5&Velt &8| &cYou don't have the permissions to run this command.`;
+            if (path == null) {
+                path = scripts.location;
+            } else {
+                path = scripts.path(path);
+            }
+            plugin.setWatchPath(path);
+            sender.sendMessage(c`&5&lVelt &8| &fWatching for changes in &b${path}`);
+        },
+        unwatch(sender) {
+            if (!sender.hasPermission('velt.watch')) return c`&5&Velt &8| &cYou don't have the permissions to run this command.`;
+            plugin.setWatchPath(null);
+            sender.sendMessage(c`&5&lVelt &8| &fNo longer watching for changes.`);
+        },
         eval(sender, ...args) {
-            if (!sender.hasPermission('velt.eval')) return;
+            if (!sender.hasPermission('velt.eval')) return c`&5&Velt &8| &cYou don't have the permissions to run this command.`;
             const evaluate = args.join(' ');
             sender.sendMessage(c`&5&lVelt &8| &b${evaluate}`);
             try {

@@ -3,6 +3,7 @@ package xyz.corman.velt;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 
@@ -17,7 +18,10 @@ public class VeltCommand extends BukkitCommand {
 	
 	public VeltCommand(String label, String name, List<String> aliases, String description, String usage, CommandExecute executor, TabExecute tabExecutor, Plugin plugin) {
         super(name, description, usage, aliases);
-        if (label != null) this.setLabel(label);
+        boolean labelSuccess = this.setLabel(label);
+        if (!labelSuccess) {
+			Bukkit.getLogger().warning(String.format("Velt was unsuccessful in setting %s's label to %s", name, label));
+		}
         this.executor = executor;
         this.tabExecutor = tabExecutor;
 	}

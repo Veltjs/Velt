@@ -132,7 +132,10 @@ const events = {
         try {
             this.listeners.forEach(({ types, run }) => {
                 if (this.checkTypes(types, event)) {
-                    run(event);
+                    const out = run(event);
+                    if (out?.then && out?.catch) {
+                        out.catch(console.error);
+                    }
                 }
             });
             this.waiting.forEach(({ types, condition, run }) => {

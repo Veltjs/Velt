@@ -402,6 +402,12 @@ const commands = {
                         }
                         if (typeof res === 'string') {
                             sender.sendMessage(res);
+                        } else if (res?.then && res?.catch) {
+                            res?.then(out => {
+                                if (typeof out === 'string') {
+                                    sender.sendMessage(out);
+                                }
+                            }).catch(console.error);
                         }
                     } catch (e) {
                         console.error(e);
@@ -429,7 +435,7 @@ const commands = {
                 cmd.setPermissionMessage(permissionMessage);
             }
 
-            Utils.getCommandMap().register(cmd.getName(), "velt", cmd);
+            Utils.getCommandMap().register(cmd.getName(), label, cmd);
             Bukkit.getServer().syncCommands();
 
             for (const [ sub, actual ] of Object.entries(subs)) {

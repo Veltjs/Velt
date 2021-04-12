@@ -242,7 +242,10 @@ const server = {
                         call.resolve(count);
                         callbacks.splice(callbacks.indexOf(call), 1);
                     } else {
-                        call.apply(out, [ count ]);
+                        const res = call.apply(out, [ count ]);
+                        if (res?.then && res?.catch) {
+                            res.catch(console.error);
+                        }
                     }
                 });
                 count++;

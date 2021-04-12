@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -31,6 +32,10 @@ import xyz.corman.velt.modules.FileSystem;
 //import org.bstats.charts.CustomChart;
 //import org.bstats.charts.SimplePie;
 
+interface AnonymousCallback<T> {
+	void handle(T error);
+}
+
 public class Velt extends JavaPlugin implements Listener {
 	private static Velt instance;
 	
@@ -40,6 +45,18 @@ public class Velt extends JavaPlugin implements Listener {
 	private File libFolder;
 	private File scriptDataFolder;
 	private Value libs;
+	private ScriptWatch scriptWatch;
+	private ScriptListener watchListener;
+	private String watchPath;
+
+	public String getWatchPath() {
+		return watchPath;
+	}
+
+	public void setWatchPath(String path) {
+		watchPath = path;
+	}
+
 	Logger log;
 	String[] extensions = new String[] {
 		".js",
@@ -106,6 +123,8 @@ public class Velt extends JavaPlugin implements Listener {
         metrics.addCustomChart(new Metrics.SimplePie("script_count", () -> String.format("%s", scriptsFolder.listFiles().length)));
 	}
 	public void onEnable() {
+		Velt velt = this;
+
 		setLibs(null);
 		log = this.getLogger();
 		instance = this;
@@ -126,7 +145,29 @@ public class Velt extends JavaPlugin implements Listener {
 		if (!modulesFolder.exists()) modulesFolder.mkdir();
 		if (!libFolder.exists()) libFolder.mkdir();
 		if (!scriptDataFolder.exists()) scriptDataFolder.mkdir();
-		
+
+		watchListener = file -> {
+			if (watchPath == null) {
+				return;
+			}
+			Path path = Paths.get(file.toString());
+			if (path.startsWith(watchPath)) {
+				new BukkitRunnable() {
+					@Override
+					public void run() {
+						velt.reload(err -> {
+							if (err == null) {
+								getLogger().info("Successfully reloaded Velt with /velt watch");
+							}
+						});
+					}
+				}.runTaskLater(this, 1);
+			}
+		};
+
+		scriptWatch = new ScriptWatch(this, watchListener);
+		scriptWatch.watch();
+
 		String[] files = {
 			/*=========================
 			 * MODULE LOADERS
@@ -230,7 +271,7 @@ public class Velt extends JavaPlugin implements Listener {
 			"nearley.js",
 			"js-yaml.js",
 			"typescript/index.js",
-			"skulpt.js",
+			"table-polyfill.js",
 
 			"base64-js.js",
 			"base-64.js",
@@ -321,11 +362,16 @@ public class Velt extends JavaPlugin implements Listener {
 		
 		List<String> classpath = new ArrayList<String>();
 
-		load();
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				load();
+			}
+		}.runTaskLater(this, 1);
 		
 		loadBStats();
 	}
-	public void reload() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchFieldException {
+	public void reload(AnonymousCallback<Throwable> callback) {
 		Velt velt = this;
 		new BukkitRunnable() {
 			@Override
@@ -335,12 +381,20 @@ public class Velt extends JavaPlugin implements Listener {
 				} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException
 						| InvocationTargetException | NoSuchFieldException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
+					callback.handle(e);
+					return;
 				}
 				new BukkitRunnable() {
 					@Override
 					public void run() {
-						velt.load();
+						try {
+							context = null;
+							velt.load();
+						} catch (Throwable e) {
+							callback.handle(e);
+							return;
+						}
+						callback.handle(null);
 					}
 				}.runTaskLater(velt, 2);
 			}
@@ -372,45 +426,49 @@ public class Velt extends JavaPlugin implements Listener {
 		try {
 			context.eval(fromString("throw new Error()", "<error>"));
 		} catch (Exception e) {}
+		Context current = context;
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				current.close(false);
+				current.leave();
+			}
+		}.runTaskLater(this, 3);
 	}
 	public void loadOnce() {
 		context = ContextCreation.createContext();
 	}
 	public void load() {
-		new BukkitRunnable() {
-			public void run() {
-				Utils.runInPluginContext(() -> {
-					if (context == null) {
-						loadOnce();
-					}
-					context.getBindings("js").putMember("__context", context);
-					String loaderPath = String.join(File.separator, dataFolder.getAbsolutePath(), "node_modules", "velt-loader", "index.js")
-							.trim();
-					loaderPath = Utils.escape(loaderPath);
-					context.eval(fromString("load('" + loaderPath + "')", "velt-loader.js"));
-					log.info("Loading scripts");
-					context.eval(fromString("require('globals')", "globals.js"));
-					context.eval(fromString("require('velt/setup')", "globals.js"));
-					for (File file : scriptsFolder.listFiles()) {
-						String path = file.getAbsolutePath();
-						String fileName = file.getPath();
-						boolean hasExtension = false;
-						for (String extension : extensions) {
-							if (fileName.endsWith(extension)) {
-								hasExtension = true;
-								break;
-							}
-						}
-						if (!hasExtension && !file.isDirectory()) {
-							continue;
-						}
-						log.info(String.format("Loading script: %s", file.getName()));
-						String absPath = Utils.escape(file.getAbsolutePath().trim());
-						context.eval(fromString("require('" + absPath + "')", "<Loading>"));
-					}
-				});
+		Utils.runInPluginContext(() -> {
+			if (context == null) {
+				loadOnce();
 			}
-		}.runTaskLater(this, 1);
+			context.getBindings("js").putMember("__context", context);
+			String loaderPath = String.join(File.separator, dataFolder.getAbsolutePath(), "node_modules", "velt-loader", "index.js")
+					.trim();
+			loaderPath = Utils.escape(loaderPath);
+			context.eval(fromString("load('" + loaderPath + "')", "velt-loader.js"));
+			log.info("Loading scripts");
+			context.eval(fromString("require('globals')", "globals.js"));
+			context.eval(fromString("require('velt/setup')", "globals.js"));
+			for (File file : scriptsFolder.listFiles()) {
+				String path = file.getAbsolutePath();
+				String fileName = file.getPath();
+				boolean hasExtension = false;
+				for (String extension : extensions) {
+					if (fileName.endsWith(extension)) {
+						hasExtension = true;
+						break;
+					}
+				}
+				if (!hasExtension && !file.isDirectory()) {
+					continue;
+				}
+				log.info(String.format("Loading script: %s", file.getName()));
+				String absPath = Utils.escape(file.getAbsolutePath().trim());
+				context.eval(fromString("require('" + absPath + "')", "<Loading>"));
+			}
+		});
 	}
 	public static Source fromString(String string, String path) {
 		return Source.newBuilder("js", string, path).buildLiteral();

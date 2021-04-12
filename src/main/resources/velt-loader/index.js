@@ -8,106 +8,6 @@ require = (function() {
 	let fs;
 	let ts;
 
-	let libCache;
-	const inst = Velt.getInstance();
-	if (inst.getLibs() != null) {
-		libCache = inst.getLibs();
-	} else {
-		libCache = {};
-		inst.setLibs(libCache);
-	}
-
-	const libs = Paths.get(
-		Velt.getInstance().getDataFolder().getAbsolutePath(),
-		"node_modules",
-		"typescript"
-	);
-
-	const types = Paths.get(
-		Velt.getInstance().getDataFolder().getAbsolutePath(),
-		"node_modules",
-		"@types"
-	);
-
-	const path = Paths.get(
-		Velt.getInstance().getDataFolder().getAbsolutePath(),
-		"node_modules",
-		"typescript",
-		"lib",
-		"lib.d.ts"
-	).toString();
-
-	const compileFull = (file, source) => {
-		let output;
-		let program = ts.createProgram([file], { allowJs: true }, {
-			getSourceFile(fileName, languageVersion) {
-				const path = Paths.get(fileName);
-				const formatted = path.toString();
-				const isLib = path.startsWith(libs);
-				if (isLib) {
-					console.log('Here:', formatted, !!libCache[formatted], Object.keys(libCache));
-					if (libCache[formatted]) {
-						return libCache[formatted];
-					}
-				}
-				let sourceText = readFile(fileName);
-				if (isLib) {
-					console.log('Generating Typescript Lib:', fileName);
-				}
-				const out = sourceText !== undefined
-					? ts.createSourceFile(fileName, sourceText, languageVersion)
-					: undefined;
-				if (isLib) {
-					libCache[formatted] = out;
-				}
-				return out;
-			},
-			getDefaultLibFileName: () => path,
-			writeFile: (fileName, content) => {
-				output = content;
-			},
-			getCurrentDirectory: () => new File(file).getParentFile().getAbsolutePath(),
-			getDirectories: path => [],
-			getCanonicalFileName: fileName => fileName,
-			getNewLine: () => '\n',
-			useCaseSensitiveFileNames: () => false,
-			readFile(name) {
-				const exists = new File(name).exists();
-				if (exists) {
-					return fs.readFile(name);
-				} else {
-					return Promise.resolve(null);
-				}
-			},
-			fileExists(path) {
-				return new File(path).exists();
-			}
-		});
-		let emitResult = program.emit();
-
-		let allDiagnostics = ts
-			.getPreEmitDiagnostics(program)
-			.concat(emitResult.diagnostics);
-
-		let success = true;
-		allDiagnostics.forEach(diagnostic => {
-			if (!(diagnostic.file)) {
-				return;
-			}
-			const simplified = Paths.get(diagnostic.file.fileName);
-			if (!(simplified.startsWith(libs)) && !(simplified.startsWith(types))) {
-				let { line, character } = ts.getLineAndCharacterOfPosition(diagnostic.file, diagnostic.start);
-				let message = ts.flattenDiagnosticMessageText(diagnostic.messageText, "\n");
-				console.error(`${diagnostic.file.fileName} (${line + 1},${character + 1}): ${message}`);
-				success = false;
-			}
-		});
-		if (success) {
-			return output;
-		} else {
-			return null;
-		}
-	};
 	const compile = (source, config) => {
 		return ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS }}).outputText;
 	}
@@ -119,24 +19,7 @@ require = (function() {
 		return file.exists() && file.isDirectory();
 	}
 
-	const cleanString = input => {
-		var output = "";
-		for (let i = 0; i < input.length; i++ || input.charCodeAt(i) >= 160 && input.charCodeAt(i) <= 255) {
-			if (input.charCodeAt(i) <= 127) {
-				output += input.charAt(i);
-			}
-		}
-		return output;
-	};
-
 	const cache = {};
-
-	class ModuleError extends Error {
-		constructor(message) {
-			super(message);
-			this.name = this.constructor.name;
-		}
-	}
 
 	class Failure {}
 
@@ -243,6 +126,7 @@ require = (function() {
 				} catch (e) {
 					console.error(`Error in ${this.filename}`);
 					console.error(e);
+					throw `Error in ${this.filename}\n${e}`;
 				}
 			}
 			module.loaded = true;
