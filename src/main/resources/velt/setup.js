@@ -31,7 +31,10 @@ const reload = {
 };
 
 const promptMessage = player => events.once('PlayerChatEvent', event => event.getPlayer() === player)
-    .then(i => i.getMessage());
+    .then(i => {
+        i.setCancelled(true);
+        return i.getMessage();
+    });
 
 commands.create('velt', {
     argParser: null,
@@ -41,7 +44,32 @@ commands.create('velt', {
         reload: reload,
         rl: reload,
         async repl(sender) {
-            if (!sender.hasPermission('velt.watch')) return c`&5&Velt &8| &cYou don't have the permissions to run this command.`;
+            if (!sender.hasPermission('velt.repl')) return c`&5&Velt &8| &cYou don't have the permissions to run this command.`;
+            sender.sendMessage(c`&5&lVelt &8| &fWelcome to the Velt REPL!`);
+            sender.sendMessage(c`&bNote: &fThe only way to save vars between multiple repl lines is by saving them to &bctx&f.`);
+
+            const ctx = {};
+
+            const online = () => {
+                if (sender.isOnline) {
+                    return sender.isOnline();
+                }
+                return true;
+            }
+
+            while (online()) {
+                const msg = await promptMessage(sender);
+                sender.sendMessage(c`&8> &f${msg}`);
+                if (msg.type === '.exit') {
+                    sender.sendMessage(c`&5&lVelt &8| &fRepl ended.`)
+                }
+                try {
+                    const val = eval(msg);
+                    sender.sendMessage(c`&b${val}`);
+                } catch (e) {
+                    sender.sendMessage(c`&c${e}`)
+                }
+            }
         },
         watch(sender, path) {
             if (!sender.hasPermission('velt.watch')) return c`&5&Velt &8| &cYou don't have the permissions to run this command.`;
