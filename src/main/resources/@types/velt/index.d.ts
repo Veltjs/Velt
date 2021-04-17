@@ -260,6 +260,22 @@ interface Command extends BaseCommand {
 	label?: string;
 }
 
+interface CommandType<T> {
+	/**
+	 * Match this argument - with the current sender and argument. Return `undefined` if this command type cannot match the argument, and return the new value you want the arg to be replaced with.
+	 * @param sender The person sending the command
+	 * @param arg The argument we're matching
+	 */
+	match(sender: any, arg: string): any;
+
+	/**
+	 * Tab complete this comamnd type
+	 * @param sender The person sending the command
+	 * @param arg The argument we have so far
+	 */
+	tabComplete(sender: any, arg: string): string[];
+}
+
 /**
  * The wrapper around commands provided by Velt.
  */
@@ -268,8 +284,8 @@ interface Commands {
 	 * A command type, which has a name, `match` (for checking if an argument matches this type) and `tabComplete` (for tab completing arguments of this type)
 	 * @param opts The options to create this command type with
 	 */
-	createType(opts: {}): this;
-	createType(type: string, opts: {}): this;
+	createType<T>(opts: CommandType<T>): this;
+	createType<T>(type: string, opts: CommandType<T>): this;
 	/**
 	 * A command type with a name that tab completes to a list of items and matches only them.
 	 * @param type The name of the new list type
