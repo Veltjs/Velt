@@ -246,6 +246,7 @@ public class Velt extends JavaPlugin implements Listener {
 			"velt/helpers.js",
 			"velt/storage.js",
 			"velt/convert.js",
+			"velt/java.js",
 
 			"velt/yaml.js",
 			"velt/events.js",

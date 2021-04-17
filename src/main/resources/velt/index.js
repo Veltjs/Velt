@@ -45,6 +45,7 @@ const internals = require('./internals');
 const commands = require('./commands');
 
 const colorize = internals.handleStringFunc( (text, char = '&') => ChatColor.translateAlternateColorCodes(char, text));
+const uncolor = text => ChatColor.stripColor(text);
 
 const server = {
     broadcast(msg, permission = undefined) {
@@ -295,7 +296,8 @@ const server = {
     },
     isMob(entity, type) {
         return entity instanceof Java.type(`org.bukkit.entity.${type}`);
-    }
+    },
+    uncolor
 };
 
 server.stop = server.shutdown;

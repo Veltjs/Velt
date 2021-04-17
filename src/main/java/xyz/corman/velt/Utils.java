@@ -14,6 +14,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.ArrayList;
 
+import jdk.vm.ci.code.site.Call;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -24,11 +25,20 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.SimplePluginManager;
+import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 
 import xyz.corman.velt.Velt.ContextCallback;
+
+interface Callable<T> {
+	T execute(Object ...args);
+}
+
+interface VoidCallable {
+	void execute(Object ...args);
+}
 
 public class Utils {
 	static List<VeltCommand> commands  = new ArrayList<>();;
@@ -144,5 +154,18 @@ public class Utils {
 	}
 	public static <T> T cast(Class<T> cls, Object obj) {
 		return (T) cls.cast(obj);
+	}
+
+	public static <T> VoidRun wrap(Callable<T> val) {
+		VoidRun res = new VoidRun((Object ...args) -> {
+			new BukkitRunnable() {
+				@Override
+				public void run() {
+					val.execute(args);
+				}
+
+			}.runTaskLater(Velt.getInstance(), 0);
+		});
+		return res;
 	}
 }

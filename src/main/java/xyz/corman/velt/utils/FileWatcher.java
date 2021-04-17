@@ -3,13 +3,8 @@ package xyz.corman.velt.utils;
 import static java.nio.file.StandardWatchEventKinds.*;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.ClosedWatchServiceException;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,7 +30,13 @@ public class FileWatcher implements Runnable {
     public void run() {
         try (WatchService watchService = FileSystems.getDefault().newWatchService()) {
             Path path = Paths.get(folder.getAbsolutePath());
-            path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_DELETE);
+            Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_MODIFY);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
             watchServices.add(watchService);
             boolean poll = true;
             while (poll) {
