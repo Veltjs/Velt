@@ -7,8 +7,6 @@ const { Enchantment } = Java.pkg('org.bukkit.enchantments');
 
 const { Paths } = Java.pkg('java.nio.file');
 
-const { Utils } = Java.pkg('xyz.corman.velt');
-
 const { Arrays, UUID } = Java.pkg('java.util');
 
 const Index = Java.type('xyz.corman.velt.Velt');
@@ -449,8 +447,6 @@ let cast = {
         }
     }
 }
-
-const c = colorize;
 
 server.after(1, () => require('./setup'));
 
