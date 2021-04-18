@@ -27,10 +27,6 @@ import org.bukkit.command.Command;
 import org.graalvm.polyglot.Value;
 import xyz.corman.velt.modules.FileSystem;
 
-//import org.bstats.bukkit.Metrics;
-//import org.bstats.charts.CustomChart;
-//import org.bstats.charts.SimplePie;
-
 interface AnonymousCallback<T> {
 	void handle(T error);
 }
