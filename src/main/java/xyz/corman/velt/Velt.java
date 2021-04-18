@@ -18,7 +18,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
@@ -152,16 +151,13 @@ public class Velt extends JavaPlugin implements Listener {
 			}
 			Path path = Paths.get(file.toString());
 			if (path.startsWith(watchPath)) {
-				new BukkitRunnable() {
-					@Override
-					public void run() {
-						velt.reload(err -> {
-							if (err == null) {
-								getLogger().info("Successfully reloaded Velt with /velt watch");
-							}
-						});
-					}
-				}.runTaskLater(this, 1);
+				Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
+					velt.reload(err -> {
+						if (err == null) {
+							getLogger().info("Successfully reloaded Velt with /velt watch");
+						}
+					});
+				}, 1);
 			}
 		};
 
@@ -363,43 +359,33 @@ public class Velt extends JavaPlugin implements Listener {
 		
 		List<String> classpath = new ArrayList<String>();
 
-		new BukkitRunnable() {
-			@Override
-			public void run() {
-				load();
-			}
-		}.runTaskLater(this, 1);
+		Bukkit.getScheduler().scheduleSyncDelayedTask(this, this::load, 1);
 		
 		loadBStats();
 	}
 	public void reload(AnonymousCallback<Throwable> callback) {
 		Velt velt = this;
-		new BukkitRunnable() {
-			@Override
-			public void run() {
+
+		Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
+			try {
+				velt.stop();
+			} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchFieldException e) {
+				// TODO Auto-generated catch block
+				callback.handle(e);
+				return;
+			}
+			Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
 				try {
-					velt.stop();
-				} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException
-						| InvocationTargetException | NoSuchFieldException e) {
-					// TODO Auto-generated catch block
+					context = null;
+					velt.load();
+				} catch (Throwable e) {
 					callback.handle(e);
 					return;
 				}
-				new BukkitRunnable() {
-					@Override
-					public void run() {
-						try {
-							context = null;
-							velt.load();
-						} catch (Throwable e) {
-							callback.handle(e);
-							return;
-						}
-						callback.handle(null);
-					}
-				}.runTaskLater(velt, 2);
-			}
-		}.runTaskLater(this, 3);
+				callback.handle(null);
+			}, 2);
+		}, 3);
 	}
 	public void stop() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchFieldException {
 		Events.getInstance().clearConsumers();
@@ -428,13 +414,10 @@ public class Velt extends JavaPlugin implements Listener {
 			context.eval(fromString("throw new Error()", "<error>"));
 		} catch (Exception e) {}
 		Context current = context;
-		new BukkitRunnable() {
-			@Override
-			public void run() {
-				current.close(false);
-				current.leave();
-			}
-		}.runTaskLater(this, 3);
+		Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
+			current.close(false);
+			current.leave();
+		}, 3);
 	}
 	public void loadOnce() {
 		context = ContextCreation.createContext();
