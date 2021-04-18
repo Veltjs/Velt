@@ -387,7 +387,7 @@ let cast = {
         if (obj instanceof ItemStack) {
             return obj;
         }
-        return server.itemstack(obj, {});
+        return server.itemstack(obj);
     },
     asTicks(obj) {
         if (Number.isInteger(obj)) return obj;
