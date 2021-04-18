@@ -842,6 +842,7 @@ module.exports = {
 	attrs,
 	Gui,
 	swap,
+	equip,
 	Pathfinder,
 	Scoreboard,
 	EntityWrapper,
