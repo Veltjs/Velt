@@ -26,5 +26,5 @@ jobs:
       run: mvn clean package
     - uses: actions/upload-artifact@v1
       with:
-        name: "Velt-{{ steps.get_version.outputs.version }}.jar"
-        path: "target/Velt-{{ steps.get_version.outputs.version }}.jar"
+        name: "Velt-${{ steps.get_version.outputs.version }}.jar"
+        path: "target/Velt-${{ steps.get_version.outputs.version }}.jar"
