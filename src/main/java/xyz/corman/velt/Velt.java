@@ -122,6 +122,13 @@ public class Velt extends JavaPlugin implements Listener {
         Metrics metrics = new Metrics(this, pluginId);
         metrics.addCustomChart(new Metrics.SimplePie("script_count", () -> String.format("%s", scriptsFolder.listFiles().length)));
 	}
+	public void onDisable() {
+		try {
+			stop();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	public void onEnable() {
 		Velt velt = this;
 
