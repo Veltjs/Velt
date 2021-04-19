@@ -61,7 +61,6 @@ function effect(entity, type, {duration = 20, amplifier = 0} = {}) {
 		.createEffect(cast.asTicks(duration), amplifier)
 		.apply(entity);
 }
-
 function clearEffects(entity) {
 	entity.getActivePotionEffects().forEach(effect => {
 		entity.removePotionEffect(effect.getType());
@@ -763,7 +762,7 @@ const particles = {
 			return particle;
 		}
 	},
-	show(particle, loc, opts) {
+	show(particle, loc, opts = {}) {
 		particle = this.getParticle(particle);
 		loc.getWorld().spawnParticle(
 			particle,

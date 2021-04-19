@@ -69,7 +69,7 @@ const events = {
             case 2:
                 return this.once({
                     type: args[0],
-                    condition: () => true
+                    condition: args[1]
                 })
             case 1: {
                 let { type, condition, run, limit } = args[0];
