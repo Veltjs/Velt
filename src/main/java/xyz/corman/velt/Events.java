@@ -8,8 +8,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.HandlerList;
 import org.bukkit.plugin.EventExecutor;
 import org.bukkit.plugin.RegisteredListener;
-import org.bukkit.scheduler.BukkitRunnable;
-import org.graalvm.polyglot.Context;
 
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ClassInfo;
@@ -19,7 +17,6 @@ import org.bukkit.plugin.Plugin;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.ArrayList;
 import java.lang.IllegalStateException;
@@ -74,16 +71,14 @@ public class Events {
         	for (HandlerList handlerlist : HandlerList.getHandlerLists()) {
         		handlerlist.register(registeredListener);
         	}
-        	
-        	new BukkitRunnable() {
-        		public void run() {
-        	    	for (HandlerList handlerlist : HandlerList.getHandlerLists()) {
-        	    		if (!Arrays.asList(handlerlist.getRegisteredListeners()).contains(registeredListener)) {
-        	    			handlerlist.register(registeredListener);
-        	    		}
-        	    	}    			
-        		}
-        	}.runTaskTimer(plugin, 0, 1);
+
+        	Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+				for (HandlerList handlerlist : HandlerList.getHandlerLists()) {
+					if (!Arrays.asList(handlerlist.getRegisteredListeners()).contains(registeredListener)) {
+						handlerlist.register(registeredListener);
+					}
+				}
+			}, 1);
     	} else {
 	    	ClassInfoList events = eventsInfo
 	    	        .getSubclasses()

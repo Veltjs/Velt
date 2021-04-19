@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.nio.file.Paths;
 
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -128,51 +129,31 @@ public class FileSystem {
 	
 	public void readFile(String name, BiConsumer<String, Exception> consumer) {
 		readFileThreaded(name, (text, error) -> {
-			new BukkitRunnable() {
-				public void run() {
-					consumer.accept(text, error);
-				}
-			}.runTask(plugin);
+			Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> consumer.accept(text, error));
 		});
 	}
 	
 	public void appendFile(String name, String content, Consumer<Exception> consumer) {
 		appendFileThreaded(name, content, error -> {
-			new BukkitRunnable() {
-				public void run() {
-					consumer.accept(error);
-				}
-			}.runTask(plugin);
+			Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> consumer.accept(error));
 		});
 	}
 	
 	public void writeFile(String name, String content, Consumer<Exception> consumer) {
 		writeFileThreaded(name, content, error -> {
-			new BukkitRunnable() {
-				public void run() {
-					consumer.accept(error);
-				}
-			}.runTask(plugin);
+			Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> consumer.accept(error));
 		});
 	}
 	
 	public void unlink(String name, Consumer<Exception> consumer) {
 		unlinkThreaded(name, error -> {
-			new BukkitRunnable() {
-				public void run() {
-					consumer.accept(error);
-				}
-			}.runTask(plugin);
+			Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> consumer.accept(error));
 		});
 	}
 	
 	public void rename(String name, String newname, Consumer<Exception> consumer) {
 		renameThreaded(name, newname, error -> {
-			new BukkitRunnable() {
-				public void run() {
-					consumer.accept(error);
-				}
-			}.runTask(plugin);
+			Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> consumer.accept(error));
 		});
 	}
 }
