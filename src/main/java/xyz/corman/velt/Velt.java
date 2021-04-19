@@ -8,17 +8,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
@@ -27,10 +23,6 @@ import org.bukkit.command.Command;
 
 import org.graalvm.polyglot.Value;
 import xyz.corman.velt.modules.FileSystem;
-
-//import org.bstats.bukkit.Metrics;
-//import org.bstats.charts.CustomChart;
-//import org.bstats.charts.SimplePie;
 
 interface AnonymousCallback<T> {
 	void handle(T error);
@@ -120,7 +112,7 @@ public class Velt extends JavaPlugin implements Listener {
 	public void loadBStats() {
         int pluginId = 10685; // <-- Replace with the id of your plugin!
         Metrics metrics = new Metrics(this, pluginId);
-        metrics.addCustomChart(new Metrics.SimplePie("script_count", () -> String.format("%s", scriptsFolder.listFiles().length)));
+        metrics.addCustomChart(new Metrics.SimplePie("script_count", () -> String.format("%s", Objects.requireNonNull(scriptsFolder.listFiles()).length)));
 	}
 	public void onDisable() {
 		try {
@@ -159,16 +151,11 @@ public class Velt extends JavaPlugin implements Listener {
 			}
 			Path path = Paths.get(file.toString());
 			if (path.startsWith(watchPath)) {
-				new BukkitRunnable() {
-					@Override
-					public void run() {
-						velt.reload(err -> {
-							if (err == null) {
-								getLogger().info("Successfully reloaded Velt with /velt watch");
-							}
-						});
+				Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> velt.reload(err -> {
+					if (err == null) {
+						getLogger().info("Successfully reloaded Velt with /velt watch");
 					}
-				}.runTaskLater(this, 1);
+				}), 1);
 			}
 		};
 
@@ -368,45 +355,35 @@ public class Velt extends JavaPlugin implements Listener {
 		Scheduling.setInstance(new Scheduling());
 		Events.setInstance(new Events(this));
 		
-		List<String> classpath = new ArrayList<String>();
+		List<String> classpath = new ArrayList<>();
 
-		new BukkitRunnable() {
-			@Override
-			public void run() {
-				load();
-			}
-		}.runTaskLater(this, 1);
+		Bukkit.getScheduler().scheduleSyncDelayedTask(this, this::load, 1);
 		
 		loadBStats();
 	}
 	public void reload(AnonymousCallback<Throwable> callback) {
 		Velt velt = this;
-		new BukkitRunnable() {
-			@Override
-			public void run() {
+
+		Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
+			try {
+				velt.stop();
+			} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | NoSuchFieldException e) {
+				// TODO Auto-generated catch block
+				callback.handle(e);
+				return;
+			}
+			Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
 				try {
-					velt.stop();
-				} catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException
-						| InvocationTargetException | NoSuchFieldException e) {
-					// TODO Auto-generated catch block
+					context = null;
+					velt.load();
+				} catch (Throwable e) {
 					callback.handle(e);
 					return;
 				}
-				new BukkitRunnable() {
-					@Override
-					public void run() {
-						try {
-							context = null;
-							velt.load();
-						} catch (Throwable e) {
-							callback.handle(e);
-							return;
-						}
-						callback.handle(null);
-					}
-				}.runTaskLater(velt, 2);
-			}
-		}.runTaskLater(this, 3);
+				callback.handle(null);
+			}, 2);
+		}, 3);
 	}
 	public void stop() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchFieldException {
 		Events.getInstance().clearConsumers();
@@ -414,12 +391,7 @@ public class Velt extends JavaPlugin implements Listener {
 			command.unregister(Utils.getCommandMap());
 		}
 		Map<String, Command> knownCommands = Utils.getKnownCommands();
-		for (Iterator<Command> i = knownCommands.values().iterator(); i.hasNext(); ) {
-			Command cmd = i.next();
-			if (cmd instanceof VeltCommand) {
-				i.remove();
-			}
-		}
+		knownCommands.values().removeIf(cmd -> cmd instanceof VeltCommand);
 		Utils.commands.clear();
 		Server server = Bukkit.getServer();
 		Class<? extends Server> serverClass = server.getClass();
@@ -435,13 +407,10 @@ public class Velt extends JavaPlugin implements Listener {
 			context.eval(fromString("throw new Error()", "<error>"));
 		} catch (Exception e) {}
 		Context current = context;
-		new BukkitRunnable() {
-			@Override
-			public void run() {
-				current.close(false);
-				current.leave();
-			}
-		}.runTaskLater(this, 3);
+		Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
+			current.close(false);
+			current.leave();
+		}, 3);
 	}
 	public void loadOnce() {
 		context = ContextCreation.createContext();
@@ -459,7 +428,7 @@ public class Velt extends JavaPlugin implements Listener {
 			log.info("Loading scripts");
 			context.eval(fromString("require('globals')", "globals.js"));
 			context.eval(fromString("require('velt/setup')", "globals.js"));
-			for (File file : scriptsFolder.listFiles()) {
+			for (File file : Objects.requireNonNull(scriptsFolder.listFiles())) {
 				String path = file.getAbsolutePath();
 				String fileName = file.getPath();
 				boolean hasExtension = false;

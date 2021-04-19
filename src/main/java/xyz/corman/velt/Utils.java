@@ -24,7 +24,6 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.SimplePluginManager;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
@@ -157,13 +156,7 @@ public class Utils {
 
 	public static <T> VoidRun wrap(Callable<T> val) {
 		VoidRun res = new VoidRun((Object ...args) -> {
-			new BukkitRunnable() {
-				@Override
-				public void run() {
-					val.execute(args);
-				}
-
-			}.runTaskLater(Velt.getInstance(), 0);
+			Bukkit.getScheduler().scheduleSyncDelayedTask(Velt.getInstance(), val::execute, 0); //why does this need to be delayed by 1 tick?
 		});
 		return res;
 	}
