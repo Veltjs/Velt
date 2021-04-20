@@ -244,42 +244,18 @@ class Pathfinder {
 }
 
 class Scoreboard {
-	constructor(...args) {
+	constructor(opts) {
 		// name = undefined, slot = 'sidebar', type = 'dummy'
-		let name, slot, type, scores;
-		if (args.length == 1) {
-			if (typeof args[0] == 'string') {
-				name = args[0];
-			} else {
-				({ name, scores, slot, type } = args[0]);
-			}
-		} else if (args.length == 2) {
-			name = args[0];
-			if (typeof args[1] == 'string') {
-				slot = args[1];
-			} else {
-				({ slot, type, scores } = args[1]);
-				if (args[1].name) name = args[1].name;
-			}
-		} else if (args.length == 3) {
-			[ name, slot ] = args;
-			if (typeof args[2] == 'string') {
-				type = args[2];
-			} else {
-				({ type, scores } = args[2]);
-				if (args[2].name) name = args[2].name;
-				if (args[2].scores) scores = args[2].scores;
-				if (args[2].slot) slot = args[2].slot;
-			}
-		} else {
-			[ name, slot, type, scores ] = args;
-		}
+		let { name, slot, type, scores, board } = opts;
 		if (!name) name = type;
-		let manager = Bukkit.getScoreboardManager();
-		this.board = manager.getNewScoreboard();
+		if (board == null) board = Scoreboard.createBoard();
+		this.board = board;
 		this.obj = this.board.registerNewObjective(name, type);
 		if (slot) this.slot = slot;
 		if (scores) this.set(scores);
+	}
+	static createBoard() {
+		return Bukkit.getScoreboardManager().getNewScoreboard();
 	}
 	set slot(slot) {
 		this.setSlot(slot);
