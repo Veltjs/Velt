@@ -404,7 +404,7 @@ public class Velt extends JavaPlugin implements Listener {
 			}
 		}
 		try {
-			context.eval(fromString("throw new Error()", "<error>"));
+			context.eval(Utils.fromString("throw new Error()", "<error>"));
 		} catch (Exception e) {}
 		Context current = context;
 		Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
@@ -424,10 +424,10 @@ public class Velt extends JavaPlugin implements Listener {
 			String loaderPath = String.join(File.separator, dataFolder.getAbsolutePath(), "node_modules", "velt-loader", "index.js")
 					.trim();
 			loaderPath = Utils.escape(loaderPath);
-			context.eval(fromString("load('" + loaderPath + "')", "velt-loader.js"));
+			context.eval(Utils.fromString("load('" + loaderPath + "')", "velt-loader.js"));
 			log.info("Loading scripts");
-			context.eval(fromString("require('globals')", "globals.js"));
-			context.eval(fromString("require('velt/setup')", "globals.js"));
+			context.eval(Utils.fromString("require('globals')", "globals.js"));
+			context.eval(Utils.fromString("require('velt/setup')", "globals.js"));
 			for (File file : Objects.requireNonNull(scriptsFolder.listFiles())) {
 				String path = file.getAbsolutePath();
 				String fileName = file.getPath();
@@ -443,11 +443,8 @@ public class Velt extends JavaPlugin implements Listener {
 				}
 				log.info(String.format("Loading script: %s", file.getName()));
 				String absPath = Utils.escape(file.getAbsolutePath().trim());
-				context.eval(fromString("require('" + absPath + "')", "<Loading>"));
+				context.eval(Utils.fromString("require('" + absPath + "')", "<Loading>"));
 			}
 		});
-	}
-	public static Source fromString(String string, String path) {
-		return Source.newBuilder("js", string, path).buildLiteral();
 	}
 }
