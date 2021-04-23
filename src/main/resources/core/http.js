@@ -1,1 +1,0 @@
-const http = module.exports = {};

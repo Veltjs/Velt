@@ -289,7 +289,7 @@ public class Velt extends JavaPlugin implements Listener {
 			"core/domain.js",
 			"core/events.js",
 			"core/fs.js",
-			"core/http.js",
+			"core/http/http.js",
 			"core/https.js",
 			"core/os.js",
 			"core/path.js",
