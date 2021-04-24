@@ -26,6 +26,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.util.Vector;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
 import xyz.corman.velt.Velt.ContextCallback;
@@ -159,5 +160,9 @@ public class Utils {
 			Bukkit.getScheduler().scheduleSyncDelayedTask(Velt.getInstance(), val::execute, 0); //why does this need to be delayed by 1 tick?
 		});
 		return res;
+	}
+
+	public static Source fromString(String string, String path) {
+		return Source.newBuilder("js", string, path).buildLiteral();
 	}
 }

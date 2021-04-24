@@ -121,7 +121,7 @@ require = (function() {
 					 Object.defineProperty(func, 'name', {value: name, configurable: true});
 					 func.apply(module, [ module.exports, module, id => require(id, module), module.filename, module.path ]);*/
 					const source = `(function(exports, module, require, __filename, __dirname) {${this.body}\n})`;
-					const evaluated = __context.eval(Velt.fromString(source, module.filename));
+					const evaluated = __runtime.eval(source, module.filename);
 					evaluated.apply(module, [module.exports, module, id => require(id, module), module.filename, module.path]);
 				} catch (e) {
 					console.error(`Error in ${this.filename}`);
@@ -158,13 +158,15 @@ require = (function() {
 
 		if (!fileExists(filename)) { //Resolve as a node module, either a core or regular module
 			if (level == 0) {
-				const modules = Paths.get(Velt.getInstance().getDataFolder().getAbsolutePath().toString(), "node_modules", id).toString();
-				const coreModules = Paths.get(Velt.getInstance().getDataFolder().getAbsolutePath().toString(), "node_modules", "core", id).toString();
+				/*const modules = Paths.get(Velt.getInstance().getDataFolder().getAbsolutePath().toString(), "node_modules", id).toString();
+				const coreModules = Paths.get(Velt.getInstance().getDataFolder().getAbsolutePath().toString(), "node_modules", "core", id).toString();*/
+				const modules = Paths.get(__runtime.getModulesFolder(), id).toString();
+				const coreModules = Paths.get(__runtime.getModulesFolder(), 'core', id).toString();
 				let res = require(modules, parent, 1);
-				if (res === Failure) res = require(coreModules, parent, 1);
+				if (res === null) res = require(coreModules, parent, 1);
 				return res;
 			} else {
-				return Failure;
+				return null;
 			}
 		}
 
