@@ -33,7 +33,7 @@ public class FileWatcher implements Runnable {
             Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_MODIFY);
+                    dir.register(watchService, ENTRY_CREATE, ENTRY_MODIFY, ENTRY_MODIFY);
                     return FileVisitResult.CONTINUE;
                 }
             });

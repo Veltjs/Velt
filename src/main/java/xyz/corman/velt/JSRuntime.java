@@ -48,11 +48,15 @@ public class JSRuntime {
     }
 
     public JSRuntime stop() {
+        JSRuntime.stop(context);
+        return this;
+    }
+
+    public static void stop(Context context) {
         try {
             context.eval(Utils.fromString("throw new Error()", "<error>"));
         } catch (Exception e) {}
         context.close(false);
         context.leave();
-        return this;
     }
 }

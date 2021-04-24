@@ -385,8 +385,8 @@ public class Velt extends JavaPlugin implements Listener {
 					return;
 				}
 				callback.handle(null);
-			}, 2);
-		}, 3);
+			}, 1);
+		}, 1);
 	}
 	public void stop() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchFieldException {
 		Events.getInstance().clearConsumers();
@@ -406,7 +406,10 @@ public class Velt extends JavaPlugin implements Listener {
 				task.cancel();
 			}
 		}
-		runtime.stop();
+		Context current = runtime.context;
+		Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
+			JSRuntime.stop(current);
+		}, 3);
 	}
 	public void load() {
 		Utils.runInPluginContext(() -> {
