@@ -360,6 +360,10 @@ public class Velt extends JavaPlugin implements Listener {
 		Bukkit.getScheduler().scheduleSyncDelayedTask(this, this::load, 1);
 		
 		loadBStats();
+
+		runtime = new VeltRuntime();
+		runtime.setModulesFolder(modulesFolder.getAbsolutePath());
+		runtime.setProvideGlobals(true);
 	}
 	public void reload(AnonymousCallback<Throwable> callback) {
 		Velt velt = this;
@@ -406,8 +410,7 @@ public class Velt extends JavaPlugin implements Listener {
 	}
 	public void load() {
 		Utils.runInPluginContext(() -> {
-			runtime.init();
-			runtime.require("velt/setup");
+			runtime.clearScripts();
 			for (File file : Objects.requireNonNull(scriptsFolder.listFiles())) {
 				String path = file.getAbsolutePath();
 				String fileName = file.getPath();
@@ -423,8 +426,10 @@ public class Velt extends JavaPlugin implements Listener {
 				}
 				log.info(String.format("Loading script: %s", file.getName()));
 				String absPath = Utils.escape(file.getAbsolutePath().trim());
-				runtime.require(absPath);
+				runtime.addScript(absPath);
 			}
+			runtime.init();
+			runtime.require("velt/setup");
 		});
 	}
 }

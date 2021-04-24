@@ -3,7 +3,7 @@ package xyz.corman.velt;
 import java.util.ArrayList;
 
 public class VeltRuntime extends JSRuntime {
-    ArrayList<String> scripts;
+    private ArrayList<String> scripts;
     public VeltRuntime() {
         super();
         scripts = new ArrayList<>();
@@ -11,6 +11,11 @@ public class VeltRuntime extends JSRuntime {
 
     public VeltRuntime addScript(String script) {
         scripts.add(script);
+        return this;
+    }
+
+    public VeltRuntime clearScripts() {
+        scripts.clear();
         return this;
     }
 
