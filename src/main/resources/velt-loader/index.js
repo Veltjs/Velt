@@ -163,10 +163,10 @@ require = (function() {
 				const modules = Paths.get(__runtime.getModulesFolder(), id).toString();
 				const coreModules = Paths.get(__runtime.getModulesFolder(), id).toString();
 				let res = require(modules, parent, 1);
-				if (res === Failure) res = require(coreModules, parent, 1);
+				if (res === null) res = require(coreModules, parent, 1);
 				return res;
 			} else {
-				return Failure;
+				return null;
 			}
 		}
 

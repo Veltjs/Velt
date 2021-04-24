@@ -66,7 +66,7 @@ public class Velt extends JavaPlugin implements Listener {
 		libs = value;
 	}
 
-	private Context context;
+	private VeltRuntime runtime;
 	
 	public String getScriptsFolder() {
 		return scriptsFolder.getAbsolutePath();
@@ -375,7 +375,6 @@ public class Velt extends JavaPlugin implements Listener {
 			}
 			Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
 				try {
-					context = null;
 					velt.load();
 				} catch (Throwable e) {
 					callback.handle(e);
@@ -403,31 +402,12 @@ public class Velt extends JavaPlugin implements Listener {
 				task.cancel();
 			}
 		}
-		try {
-			context.eval(Utils.fromString("throw new Error()", "<error>"));
-		} catch (Exception e) {}
-		Context current = context;
-		Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
-			current.close(false);
-			current.leave();
-		}, 3);
-	}
-	public void loadOnce() {
-		context = ContextCreation.createContext();
+		runtime.stop();
 	}
 	public void load() {
 		Utils.runInPluginContext(() -> {
-			if (context == null) {
-				loadOnce();
-			}
-			context.getBindings("js").putMember("__context", context);
-			String loaderPath = String.join(File.separator, dataFolder.getAbsolutePath(), "node_modules", "velt-loader", "index.js")
-					.trim();
-			loaderPath = Utils.escape(loaderPath);
-			context.eval(Utils.fromString("load('" + loaderPath + "')", "velt-loader.js"));
-			log.info("Loading scripts");
-			context.eval(Utils.fromString("require('globals')", "globals.js"));
-			context.eval(Utils.fromString("require('velt/setup')", "globals.js"));
+			runtime.init();
+			runtime.require("velt/setup");
 			for (File file : Objects.requireNonNull(scriptsFolder.listFiles())) {
 				String path = file.getAbsolutePath();
 				String fileName = file.getPath();
@@ -443,7 +423,7 @@ public class Velt extends JavaPlugin implements Listener {
 				}
 				log.info(String.format("Loading script: %s", file.getName()));
 				String absPath = Utils.escape(file.getAbsolutePath().trim());
-				context.eval(Utils.fromString("require('" + absPath + "')", "<Loading>"));
+				runtime.require(absPath);
 			}
 		});
 	}

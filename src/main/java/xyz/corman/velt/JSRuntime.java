@@ -8,14 +8,6 @@ public class JSRuntime {
     Context context;
     private boolean provideGlobals;
     private String modulesFolder;
-    private String scriptsFolder;
-
-    public String getScriptsFolder() {
-        return scriptsFolder;
-    }
-    public void setScriptsFolder(String scriptsFolder) {
-        this.scriptsFolder = scriptsFolder;
-    }
 
     public boolean getProvideGlobals() {
         return provideGlobals;
@@ -33,20 +25,29 @@ public class JSRuntime {
         return this;
     }
 
-    public JSRuntime() {
-        context = ContextCreation.createContext();
-    }
+    public JSRuntime() {}
 
     public void require(String module) {
-        context.eval(Utils.fromString(String.format("require('%s')", module), "Velt Runtime"));
+        context.eval(Utils.fromString(String.format("require('%s')", Utils.escape(module)), "Velt Runtime"));
     }
 
     public JSRuntime init() {
+        context = ContextCreation.createContext();
         context.getBindings("js").putMember("__context", context);
+        context.getBindings("js").putMember("__jsruntime", this);
         String loaderPath = String.join(File.separator, modulesFolder, "velt-loader", "index.js").trim();
         loaderPath = Utils.escape(loaderPath);
         context.eval(Utils.fromString("load('" + loaderPath + "')", "velt-loader.js"));
         require("globals");
+        return this;
+    }
+
+    public JSRuntime stop() {
+        try {
+            context.eval(Utils.fromString("throw new Error()", "<error>"));
+        } catch (Exception e) {}
+        context.close(false);
+        context.leave();
         return this;
     }
 }
