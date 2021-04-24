@@ -6,10 +6,11 @@ require = (function() {
 	const Velt = Java.type('xyz.corman.velt.Velt');
 	const FileSystem = Java.type('xyz.corman.velt.modules.FileSystem');
 	let fs;
-	let ts;
+
+	let loadedTS = false;
 
 	const compile = (source, config) => {
-		return ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS }}).outputText;
+		return __tscompiler.transpile(source);
 	}
 
 	const readFile = (...args) => FileSystem.readFileSync(...args);
@@ -74,39 +75,16 @@ require = (function() {
 					if (!fs) {
 						fs = require('fs');
 					}
-					if (!ts) {
-						const start = new Date()
+					if (!loadedTS) {
 						const info = [
 							'='.repeat(25),
 							'Velt TypeScript Support is Experimental - Please do not use it in production!',
 							'TypeScript with Velt only transpiles, it does not type-check your code',
 							'='.repeat(25)
 						].join('\n');
-						console.error(info);
-						console.log('Loading Typescript module...');
-						ts = require('typescript');
-						const end = new Date();
-						console.log(`Loaded Typescript compiler in ${Math.abs(start - end) / 1000} seconds.`)
+						loadedTS = true;
 					}
-					const configPath = ts.findConfigFile(
-						/*searchPath*/ this.filename,
-						file => {
-							return new File(file).exists();
-						},
-						"tsconfig.json"
-					);
-					let config = {};
-					if (configPath) {
-						config = JSON.parse(require('fs').readFileSync(configPath));
-					}
-					const options = {
-						...config,
-						compilerOptions: {
-							module: ts.ModuleKind.CommonJS,
-							...(config.compilerOptions ?? {})
-						}
-					}
-					const out = compile(this.body, options);
+					const out = compile(this.body);
 					if (out == null) {
 						console.error(`Could not succesfully compile ${this.filename}`);
 					}

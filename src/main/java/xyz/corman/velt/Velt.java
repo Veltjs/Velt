@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
 
+import com.sun.org.apache.bcel.internal.generic.JSR;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.event.Listener;
@@ -67,6 +68,7 @@ public class Velt extends JavaPlugin implements Listener {
 	}
 
 	private VeltRuntime runtime;
+	private TypescriptCompiler compiler;
 	
 	public String getScriptsFolder() {
 		return scriptsFolder.getAbsolutePath();
@@ -364,6 +366,10 @@ public class Velt extends JavaPlugin implements Listener {
 		runtime = new VeltRuntime();
 		runtime.setModulesFolder(modulesFolder.getAbsolutePath());
 		runtime.setProvideGlobals(true);
+
+		compiler = new TypescriptCompiler();
+		compiler.setModulesFolder(modulesFolder.getAbsolutePath());
+		compiler.setProvideGlobals(true);
 	}
 	public void reload(AnonymousCallback<Throwable> callback) {
 		Velt velt = this;
@@ -386,7 +392,7 @@ public class Velt extends JavaPlugin implements Listener {
 				}
 				callback.handle(null);
 			}, 2);
-		}, 3);
+		}, 1);
 	}
 	public void stop() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchFieldException {
 		Events.getInstance().clearConsumers();
@@ -406,7 +412,10 @@ public class Velt extends JavaPlugin implements Listener {
 				task.cancel();
 			}
 		}
-		runtime.stop();
+		Context current = runtime.context;
+		Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
+			JSRuntime.stop(current);
+		}, 5);
 	}
 	public void load() {
 		Utils.runInPluginContext(() -> {
@@ -429,6 +438,8 @@ public class Velt extends JavaPlugin implements Listener {
 				runtime.addScript(absPath);
 			}
 			runtime.init();
+			runtime.put("__tscompiler", compiler);
+			runtime.start();
 			runtime.require("velt/setup");
 		});
 	}

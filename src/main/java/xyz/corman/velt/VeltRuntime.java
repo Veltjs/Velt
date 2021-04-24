@@ -19,9 +19,7 @@ public class VeltRuntime extends JSRuntime {
         return this;
     }
 
-    @Override
-    public VeltRuntime init() {
-        super.init();
+    public VeltRuntime start() {
         for (String script : scripts) {
             super.require(script);
         }

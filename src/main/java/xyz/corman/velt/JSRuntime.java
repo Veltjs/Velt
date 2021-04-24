@@ -36,10 +36,18 @@ public class JSRuntime {
         return this.eval(String.format("require('%s')", Utils.escape(module)), "Velt Runtime");
     }
 
+    public JSRuntime put(String identifier, Object value) {
+        context.getBindings("js").putMember(identifier, value);
+        return this;
+    }
+
     public JSRuntime init() {
         context = ContextCreation.createContext();
-        context.getBindings("js").putMember("__context", context);
-        context.getBindings("js").putMember("__runtime", this);
+        if (this.getProvideGlobals()) {
+            this
+                .put("__context", context)
+                .put("__runtime", this);
+        }
         String loaderPath = String.join(File.separator, modulesFolder, "velt-loader", "index.js").trim();
         loaderPath = Utils.escape(loaderPath);
         context.eval(Utils.fromString("load('" + loaderPath + "')", "velt-loader.js"));
@@ -48,11 +56,15 @@ public class JSRuntime {
     }
 
     public JSRuntime stop() {
+        JSRuntime.stop(context);
+        return this;
+    }
+
+    public static void stop(Context context) {
         try {
             context.eval(Utils.fromString("throw new Error()", "<error>"));
         } catch (Exception e) {}
         context.close(false);
         context.leave();
-        return this;
     }
 }
