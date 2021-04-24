@@ -6,6 +6,7 @@ public class TypescriptCompiler extends JSRuntime {
     private Value compiler;
     public TypescriptCompiler() {
         super();
+    }
 
     public String transpile(String text) {
         return this.transpile(text, this.eval("{ compilerOptions: { module: ts.ModuleKind.CommonJS }}", "<TypeScript>"));
