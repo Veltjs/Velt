@@ -363,7 +363,7 @@ public class Velt extends JavaPlugin implements Listener {
 		
 		loadBStats();
 
-		runtime = new VeltRuntime();
+		runtime = new VeltRuntime(this);
 		runtime.setModulesFolder(modulesFolder.getAbsolutePath());
 		runtime.setProvideGlobals(true);
 
@@ -391,7 +391,7 @@ public class Velt extends JavaPlugin implements Listener {
 					return;
 				}
 				callback.handle(null);
-			}, 2);
+			}, 1);
 		}, 1);
 	}
 	public void stop() throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchFieldException {
@@ -419,6 +419,7 @@ public class Velt extends JavaPlugin implements Listener {
 	}
 	public void load() {
 		Utils.runInPluginContext(() -> {
+			compiler.init();
 			runtime.clearScripts();
 			for (File file : Objects.requireNonNull(scriptsFolder.listFiles())) {
 				String path = file.getAbsolutePath();
@@ -433,7 +434,7 @@ public class Velt extends JavaPlugin implements Listener {
 				if (!hasExtension && !file.isDirectory()) {
 					continue;
 				}
-				log.info(String.format("Loading script: %s", file.getName()));
+				log.info(String.format("Adding script: %s", file.getName()));
 				String absPath = Utils.escape(file.getAbsolutePath().trim());
 				runtime.addScript(absPath);
 			}

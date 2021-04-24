@@ -9,7 +9,8 @@ public class TypescriptCompiler extends JSRuntime {
     }
 
     public String transpile(String text) {
-        return this.transpile(text, this.eval("{ compilerOptions: { module: ts.ModuleKind.CommonJS }}", "<TypeScript>"));
+        Value opts = this.eval("{ compilerOptions: { module: ts.ModuleKind.CommonJS }}", "<Typescript>");
+        return this.transpile(text, opts);
     }
 
     public String transpile(String text, Value options) {
