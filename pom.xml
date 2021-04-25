@@ -4,7 +4,11 @@
 	<groupId>xyz.corman.velt</groupId>
 	<artifactId>Velt</artifactId>
 	<version>0.2.1-alpha</version>
-	<packaging>jar</packaging>
+
+	<properties>
+		<graalvm.version>21.0.0.2</graalvm.version>
+		<compiler.dir>${project.build.directory}/compiler</compiler.dir>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.spigotmc</groupId>
@@ -30,7 +34,7 @@
 		<dependency>
 			<groupId>org.graalvm.sdk</groupId>
 			<artifactId>graal-sdk</artifactId>
-			<version>21.0.0.2</version>
+			<version>${graalvm.version}</version>
 			<scope>compile</scope>
 			<type>jar</type>
 		</dependency>
@@ -38,14 +42,14 @@
 		<dependency>
 			<groupId>org.graalvm.js</groupId>
 			<artifactId>js</artifactId>
-			<version>21.0.0.2</version>
+			<version>${graalvm.version}</version>
 			<scope>compile</scope>
 			<type>jar</type>
 		</dependency>
 		<dependency>
 			<groupId>org.graalvm.truffle</groupId>
 			<artifactId>truffle-api</artifactId>
-			<version>21.0.0.2</version>
+			<version>${graalvm.version}</version>
 			<scope>compile</scope>
 			<type>jar</type>
 		</dependency>
@@ -56,6 +60,30 @@
 			<artifactId>snakeyaml</artifactId>
 			<version>1.28</version>
 		</dependency> -->
+
+		<!-- https://mvnrepository.com/artifact/org.graalvm.compiler/compiler -->
+		<dependency>
+			<groupId>org.graalvm.compiler</groupId>
+			<artifactId>compiler</artifactId>
+			<version>21.0.0.2</version>
+			<scope>compile</scope>
+			<type>jar</type>
+		</dependency>
+		<dependency>
+			<groupId>org.graalvm.compiler</groupId>
+			<artifactId>compiler-management</artifactId>
+			<version>21.0.0.2</version>
+			<scope>compile</scope>
+			<type>jar</type>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.graalvm.sdk/graal-sdk -->
+		<dependency>
+			<groupId>org.graalvm.sdk</groupId>
+			<artifactId>graal-sdk</artifactId>
+			<version>21.0.0.2</version>
+			<scope>compile</scope>
+			<type>jar</type>
+		</dependency>
 
 	</dependencies>
 	<build>
