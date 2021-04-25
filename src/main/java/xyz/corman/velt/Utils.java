@@ -26,6 +26,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.SimplePluginManager;
 import org.bukkit.util.Vector;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
@@ -62,17 +63,17 @@ public class Utils {
 	public static boolean isInstanceOf(Class cls, Object obj) {
 		return cls.isInstance(obj);
 	}
-	public static boolean isLookingAt(Player player, LivingEntity livingEntity){
+	public static boolean isLookingAt(Player player, LivingEntity livingEntity, double targetDist){
 	    Location eye = player.getEyeLocation();
 	    Vector toEntity = livingEntity.getEyeLocation().toVector().subtract(eye.toVector());
 	    double dot = toEntity.normalize().dot(eye.getDirection());
 
-	    return dot > 0.99D;
+	    return dot > targetDist;
 	}
-	public static LivingEntity getLookingAt(Player player, int range) {
+	public static LivingEntity getLookingAt(Player player, int range, double targetDist) {
 	    for (Entity e : player.getNearbyEntities(range, range, range)){
 	        if (e instanceof LivingEntity){
-	        	if (isLookingAt(player, (LivingEntity) e)) {
+	        	if (isLookingAt(player, (LivingEntity) e, targetDist)) {
 	        		return (LivingEntity) e;
 	        	}
 	        }
@@ -163,6 +164,9 @@ public class Utils {
 	}
 
 	public static Source fromString(String string, String path) {
-		return Source.newBuilder("js", string, path).buildLiteral();
+		return Source
+				.newBuilder("js", string, path)
+				.cached(true)
+				.buildLiteral();
 	}
 }

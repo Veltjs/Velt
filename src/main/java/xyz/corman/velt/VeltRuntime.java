@@ -5,8 +5,8 @@ import java.util.ArrayList;
 public class VeltRuntime extends JSRuntime {
     private ArrayList<String> scripts;
     private Velt velt;
-    public VeltRuntime(Velt plugin) {
-        super();
+    public VeltRuntime(ContextCreation creator, Velt plugin) {
+        super(creator);
         velt = plugin;
         scripts = new ArrayList<>();
     }

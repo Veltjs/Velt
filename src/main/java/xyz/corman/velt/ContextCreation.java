@@ -5,11 +5,28 @@ import java.util.List;
 import java.util.Map;
 
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.EnvironmentAccess;
 import org.graalvm.polyglot.HostAccess;
 
 public class ContextCreation {
-	public static void graalJSRequire(String moduleFolder, Map<String, String> options) {
+	private Engine engine;
+	private HostAccess hostAccess;
+
+	public ContextCreation() {
+		hostAccess = HostAccess.newBuilder(HostAccess.ALL)
+				.targetTypeMapping(Double.class, Float.class, null, x -> x.floatValue())
+				.build();
+	}
+
+	public Engine getEngine() {
+		if (engine == null) {
+			engine = Engine.create();
+		}
+		return engine;
+	}
+
+	public void graalJSRequire(String moduleFolder, Map<String, String> options) {
 		// Enable CommonJS experimental support.
 		//options.put("js.commonjs-require", "true");
 		// (optional) folder where the Npm modules to be loaded are located.
@@ -33,10 +50,7 @@ public class ContextCreation {
 			"https:lib/https,stream:lib/stream,zlib:lib/zlib,process:lib/process"
 		);*/
 	}
-	public static Context createSecureContext(Map<String, String> options) {
-		HostAccess hostAccess = HostAccess.newBuilder(HostAccess.NONE)
-				.targetTypeMapping(Double.class, Float.class, null, x -> x.floatValue())
-				.build();
+	public Context createSecureContext(Map<String, String> options) {
 		Context context = Context.newBuilder("js")
 				.allowExperimentalOptions(false)
 				.allowIO(false)
@@ -47,14 +61,12 @@ public class ContextCreation {
 				})
 				.allowNativeAccess(false)
 				.allowEnvironmentAccess(EnvironmentAccess.NONE)
+				.engine(getEngine())
 				.options(options)
 				.build();
 		return context;
 	}
-	public static Context createContext(Map<String, String> options) {
-		HostAccess hostAccess = HostAccess.newBuilder(HostAccess.ALL)
-				.targetTypeMapping(Double.class, Float.class, null, x -> x.floatValue())
-				.build();
+	public Context createContext(Map<String, String> options) {
 		Context context = Context.newBuilder("js")
                 .allowExperimentalOptions(true)
                 .allowIO(true)
@@ -64,13 +76,14 @@ public class ContextCreation {
                 .allowCreateThread(true)
                 .allowCreateProcess(true)
                 .options(options)
+				.engine(getEngine())
                 .build();
 		return context;
 	}
-	public static Context createContext() {
+	public Context createContext() {
 		return createContext(new HashMap<String, String>());
 	}
-	public static Context createContext(String moduleFolder, List<String> classpath) {
+	public Context createContext(String moduleFolder, List<String> classpath) {
 		Map<String, String> options = new HashMap<String, String>();
 		graalJSRequire(moduleFolder, options);
 		return createContext(options);

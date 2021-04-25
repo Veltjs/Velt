@@ -6,7 +6,7 @@
 	<version>0.2.1-alpha</version>
 
 	<properties>
-		<graalvm.version>21.0.0.2</graalvm.version>
+		<graalvm.version>21.1.0</graalvm.version>
 		<compiler.dir>${project.build.directory}/compiler</compiler.dir>
 	</properties>
 	<dependencies>
@@ -65,14 +65,14 @@
 		<dependency>
 			<groupId>org.graalvm.compiler</groupId>
 			<artifactId>compiler</artifactId>
-			<version>21.0.0.2</version>
+			<version>${graalvm.version}</version>
 			<scope>compile</scope>
 			<type>jar</type>
 		</dependency>
 		<dependency>
 			<groupId>org.graalvm.compiler</groupId>
 			<artifactId>compiler-management</artifactId>
-			<version>21.0.0.2</version>
+			<version>${graalvm.version}</version>
 			<scope>compile</scope>
 			<type>jar</type>
 		</dependency>
@@ -80,7 +80,7 @@
 		<dependency>
 			<groupId>org.graalvm.sdk</groupId>
 			<artifactId>graal-sdk</artifactId>
-			<version>21.0.0.2</version>
+			<version>${graalvm.version}</version>
 			<scope>compile</scope>
 			<type>jar</type>
 		</dependency>

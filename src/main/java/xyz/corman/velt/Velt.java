@@ -41,6 +41,7 @@ public class Velt extends JavaPlugin implements Listener {
 	private ScriptWatch scriptWatch;
 	private ScriptListener watchListener;
 	private String watchPath;
+	private ContextCreation contextCreation;
 
 	public String getWatchPath() {
 		return watchPath;
@@ -180,18 +181,21 @@ public class Velt extends JavaPlugin implements Listener {
 		Events.setInstance(new Events(this));
 		
 		List<String> classpath = new ArrayList<>();
-
-		Bukkit.getScheduler().scheduleSyncDelayedTask(this, this::load, 1);
 		
 		loadBStats();
 
-		runtime = new VeltRuntime(this);
-		runtime.setModulesFolder(modulesFolder.getAbsolutePath());
-		runtime.setProvideGlobals(true);
+		Utils.runInPluginContext(() -> {
+			ContextCreation contextCreation = new ContextCreation();
+			runtime = new VeltRuntime(contextCreation, this);
+			runtime.setModulesFolder(modulesFolder.getAbsolutePath());
+			runtime.setProvideGlobals(true);
 
-		compiler = new TypescriptCompiler();
-		compiler.setModulesFolder(modulesFolder.getAbsolutePath());
-		compiler.setProvideGlobals(true);
+			compiler = new TypescriptCompiler(contextCreation);
+			compiler.setModulesFolder(modulesFolder.getAbsolutePath());
+			compiler.setProvideGlobals(true);
+		});
+
+		Bukkit.getScheduler().scheduleSyncDelayedTask(this, this::load, 1);
 	}
 	public void reload(AnonymousCallback<Throwable> callback) {
 		Velt velt = this;

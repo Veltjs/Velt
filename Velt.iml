@@ -31,5 +31,7 @@
     <orderEntry type="library" name="Maven: org.graalvm.js:js:21.0.0.2" level="project" />
     <orderEntry type="library" name="Maven: org.graalvm.regex:regex:21.0.0.2" level="project" />
     <orderEntry type="library" name="Maven: org.graalvm.truffle:truffle-api:21.0.0.2" level="project" />
+    <orderEntry type="library" name="Maven: org.graalvm.compiler:compiler:21.0.0.2" level="project" />
+    <orderEntry type="library" name="Maven: org.graalvm.compiler:compiler-management:21.0.0.2" level="project" />
   </component>
 </module>

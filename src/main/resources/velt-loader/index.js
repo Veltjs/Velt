@@ -95,12 +95,9 @@ require = (function() {
 			if (extension !== 'json') {
 				const name = new File(this.filename).getName();
 				try {
-					/**const func = new Function('exports', 'module', 'require', '__filename', '__dirname', this.body);
-					 Object.defineProperty(func, 'name', {value: name, configurable: true});
-					 func.apply(module, [ module.exports, module, id => require(id, module), module.filename, module.path ]);*/
-					const source = `(function(exports, module, require, __filename, __dirname) {${this.body}\n})`;
-					const evaluated = __runtime.eval(source, module.filename);
-					evaluated.apply(module, [module.exports, module, id => require(id, module), module.filename, module.path]);
+					const func = __runtime.eval(`(function (exports, module, require, __filename, __dirname) {${this.body} \n})`, module.filename);
+					func.apply(module, [ module.exports, module, id => require(id, module), module.filename, module.path ]);
+
 				} catch (e) {
 					console.error(`Error in ${this.filename}`);
 					console.error(e);

@@ -4,8 +4,8 @@ import org.graalvm.polyglot.Value;
 
 public class TypescriptCompiler extends JSRuntime {
     private Value compiler;
-    public TypescriptCompiler() {
-        super();
+    public TypescriptCompiler(ContextCreation creator) {
+        super(creator);
     }
 
     public String transpile(String text) {

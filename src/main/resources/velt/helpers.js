@@ -46,8 +46,8 @@ function shoot(entity, proj, {
 	return proj;
 }
 
-function lookingAt(player, range = 30) {
-	let result = Utils.getLookingAt(player, range);
+function lookingAt(player, range = 30, targetDist = 0.99) {
+	let result = Utils.getLookingAt(player, range, targetDist);
 	if (result) return result;
 	return undefined;
 }

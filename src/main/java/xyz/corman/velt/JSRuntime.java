@@ -1,14 +1,22 @@
 package xyz.corman.velt;
-import com.sun.org.apache.bcel.internal.generic.JSR;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 
 import java.io.File;
 
 public class JSRuntime {
+    ContextCreation contextCreation;
     Context context;
     private boolean provideGlobals;
+    private Value bindings;
     private String modulesFolder;
+
+    public Value getBindings() {
+        if (bindings == null) {
+            bindings = context.getBindings("js");
+        }
+        return bindings;
+    }
 
     public boolean getProvideGlobals() {
         return provideGlobals;
@@ -30,19 +38,21 @@ public class JSRuntime {
         return context.eval(Utils.fromString(text, path));
     }
 
-    public JSRuntime() {}
+    public JSRuntime(ContextCreation creator) {
+        contextCreation = creator;
+    }
 
     public Value require(String module) {
         return this.eval(String.format("require('%s')", Utils.escape(module)), "Velt Runtime");
     }
 
     public JSRuntime put(String identifier, Object value) {
-        context.getBindings("js").putMember(identifier, value);
+        getBindings().putMember(identifier, value);
         return this;
     }
 
     public JSRuntime init() {
-        context = ContextCreation.createContext();
+        context = contextCreation.createContext();
         if (this.getProvideGlobals()) {
             this
                 .put("__context", context)
