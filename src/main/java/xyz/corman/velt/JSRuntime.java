@@ -12,10 +12,7 @@ public class JSRuntime {
     private String modulesFolder;
 
     public Value getBindings() {
-        if (bindings == null) {
-            bindings = context.getBindings("js");
-        }
-        return bindings;
+        return context.getBindings("js");
     }
 
     public boolean getProvideGlobals() {
@@ -39,6 +36,7 @@ public class JSRuntime {
     }
 
     public JSRuntime(ContextCreation creator) {
+        bindings = null;
         contextCreation = creator;
     }
 
@@ -54,9 +52,8 @@ public class JSRuntime {
     public JSRuntime init() {
         context = contextCreation.createContext();
         if (this.getProvideGlobals()) {
-            this
-                .put("__context", context)
-                .put("__runtime", this);
+            this.put("__context", context);
+            this.put("__runtime", this);
         }
         String loaderPath = String.join(File.separator, modulesFolder, "velt-loader", "index.js").trim();
         loaderPath = Utils.escape(loaderPath);

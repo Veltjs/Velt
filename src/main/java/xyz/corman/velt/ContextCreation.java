@@ -14,6 +14,7 @@ public class ContextCreation {
 	private HostAccess hostAccess;
 
 	public ContextCreation() {
+		engine = null;
 		hostAccess = HostAccess.newBuilder(HostAccess.ALL)
 				.targetTypeMapping(Double.class, Float.class, null, x -> x.floatValue())
 				.build();

@@ -26,6 +26,11 @@ const reload = {
         } catch (err) {
             sender.sendMessage(c`&5&lVelt &8| &fVelt encountered an error while reloading.\n`);
             sender.sendMessage(c`&c${err}`);
+            if (err.printStackTrace) {
+                err.printStackTrace();
+            } else {
+                console.error(err);
+            }
         }
     }
 };

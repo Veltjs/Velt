@@ -27,11 +27,11 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.yaml:snakeyaml:1.27" level="project" />
     <orderEntry type="library" name="Maven: io.github.classgraph:classgraph:4.8.103" level="project" />
     <orderEntry type="library" name="Maven: com.ibm.icu:icu4j:68.2" level="project" />
-    <orderEntry type="library" name="Maven: org.graalvm.sdk:graal-sdk:21.0.0.2" level="project" />
-    <orderEntry type="library" name="Maven: org.graalvm.js:js:21.0.0.2" level="project" />
-    <orderEntry type="library" name="Maven: org.graalvm.regex:regex:21.0.0.2" level="project" />
-    <orderEntry type="library" name="Maven: org.graalvm.truffle:truffle-api:21.0.0.2" level="project" />
-    <orderEntry type="library" name="Maven: org.graalvm.compiler:compiler:21.0.0.2" level="project" />
-    <orderEntry type="library" name="Maven: org.graalvm.compiler:compiler-management:21.0.0.2" level="project" />
+    <orderEntry type="library" name="Maven: org.graalvm.sdk:graal-sdk:21.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.graalvm.js:js:21.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.graalvm.regex:regex:21.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.graalvm.truffle:truffle-api:21.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.graalvm.compiler:compiler:21.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.graalvm.compiler:compiler-management:21.1.0" level="project" />
   </component>
 </module>

@@ -164,9 +164,6 @@ public class Utils {
 	}
 
 	public static Source fromString(String string, String path) {
-		return Source
-				.newBuilder("js", string, path)
-				.cached(true)
-				.buildLiteral();
+		return Source.newBuilder("js", string, path).cached(true).buildLiteral();
 	}
 }

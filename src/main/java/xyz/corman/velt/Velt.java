@@ -195,7 +195,10 @@ public class Velt extends JavaPlugin implements Listener {
 			compiler.setProvideGlobals(true);
 		});
 
-		Bukkit.getScheduler().scheduleSyncDelayedTask(this, this::load, 1);
+		Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
+			Utils.runInPluginContext(() -> compiler.init());
+			this.load();
+		}, 1);
 	}
 	public void reload(AnonymousCallback<Throwable> callback) {
 		Velt velt = this;
@@ -245,7 +248,6 @@ public class Velt extends JavaPlugin implements Listener {
 	}
 	public void load() {
 		Utils.runInPluginContext(() -> {
-			compiler.init();
 			runtime.clearScripts();
 			for (File file : Objects.requireNonNull(scriptsFolder.listFiles())) {
 				String path = file.getAbsolutePath();
