@@ -268,8 +268,8 @@ public class Velt extends JavaPlugin implements Listener {
 			}
 			runtime.init();
 			runtime.put("__tscompiler", compiler);
-			runtime.start();
 			runtime.require("velt/setup");
+			runtime.start();
 		});
 	}
 }
