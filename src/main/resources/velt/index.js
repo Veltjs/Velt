@@ -85,7 +85,11 @@ const server = {
         return this.worlds()[0];
     },
     material(name) {
-        return Material.valueOf(server.unformat(name));
+        const material = Material.valueOf(server.unformat(name));
+        if (material == null) {
+            throw new CastingError(`Cannot convert ${name} into a material (or item-type).`);
+        }
+        return material;
     },
     enchantment(name) {
         return Enchantment[server.unformat(name)];
@@ -325,6 +329,11 @@ const scripts = {
     }
 };
 
+class CastingError extends Error {}
+Object.defineProperty(CastingError.prototype, 'name', {
+    value: 'CastingError', // can even just reference `MyError.name`
+});
+
 let cast = {
     asWorld(obj) {
         if (obj instanceof World) {
@@ -332,6 +341,7 @@ let cast = {
         } else if (typeof obj == 'string') {
             return server.world(obj);
         }
+        throw new CastingError(`Cannot convert ${obj} into a world.`);
     },
     asLocation(obj) {
         let result;
@@ -363,6 +373,9 @@ let cast = {
             } = obj;
             result = new Location(cast.asWorld(world), x, y, z, yaw, pitch);
         }
+        if (result == null) {
+            throw new CastingError(`Cannot convert ${obj} into a location.`);
+        }
         return result;
     },
     asVector(obj) {
@@ -382,6 +395,7 @@ let cast = {
             const { x, y, z } = obj;
             return new Vector(x, y, z);
         }
+        throw new CastingError(`Cannot convert ${obj} into a vector.`);
     },
     asItemStack(obj) {
         if (obj instanceof ItemStack) {
@@ -445,6 +459,7 @@ let cast = {
         if (typeof obj === 'string') {
             return Bukkit.getServer().getPlayer(obj);
         }
+        throw new CastingError(`Cannot convert ${obj} into a player.`);
     }
 }
 

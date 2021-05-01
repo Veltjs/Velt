@@ -130,6 +130,11 @@ class Gui {
 		}
 		guis.push(this);
 	}
+	background(item, options) {
+		for (let slot = 0; slot < this.slots; slot++) {
+			this.set(slot, item, options);
+		}
+	}
 	set(slot, item, options) {
 		let movable, run, close;
 		if (typeof options === 'function') {
