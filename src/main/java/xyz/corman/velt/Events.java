@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.function.Consumer;
 import java.util.ArrayList;
 import java.lang.IllegalStateException;
+import java.util.logging.Logger;
 
 public class Events {
 	private static Events instance;
@@ -61,6 +62,8 @@ public class Events {
 			plugin,
 			false
 		);
+
+		Logger log = plugin.getLogger();
 		
     	ClassInfo eventsInfo = new ClassGraph()
     	        .enableClassInfo()
@@ -68,18 +71,19 @@ public class Events {
     	        .getClassInfo(Event.class.getName());
     	
     	if (eventsInfo == null) {
+    		log.info("Using backup event listener");
         	for (HandlerList handlerlist : HandlerList.getHandlerLists()) {
         		handlerlist.register(registeredListener);
         	}
-
-        	Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+        	Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
 				for (HandlerList handlerlist : HandlerList.getHandlerLists()) {
 					if (!Arrays.asList(handlerlist.getRegisteredListeners()).contains(registeredListener)) {
 						handlerlist.register(registeredListener);
 					}
 				}
-			}, 1);
+			}, 0, 1);
     	} else {
+			log.info("Using ClassGraph");
 	    	ClassInfoList events = eventsInfo
 	    	        .getSubclasses()
 	    	        .filter(info -> !info.isAbstract());
