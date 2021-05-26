@@ -14,6 +14,7 @@ import io.github.classgraph.ClassInfo;
 import io.github.classgraph.ClassInfoList;
 
 import org.bukkit.plugin.Plugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -75,13 +76,15 @@ public class Events {
         	for (HandlerList handlerlist : HandlerList.getHandlerLists()) {
         		handlerlist.register(registeredListener);
         	}
-        	Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
-				for (HandlerList handlerlist : HandlerList.getHandlerLists()) {
-					if (!Arrays.asList(handlerlist.getRegisteredListeners()).contains(registeredListener)) {
-						handlerlist.register(registeredListener);
+			new BukkitRunnable() {
+				public void run() {
+					for (HandlerList handlerlist : HandlerList.getHandlerLists()) {
+						if (!Arrays.asList(handlerlist.getRegisteredListeners()).contains(registeredListener)) {
+							handlerlist.register(registeredListener);
+						}
 					}
 				}
-			}, 0, 1);
+			}.runTaskTimer(plugin, 0, 1);
     	} else {
 			log.info("Using ClassGraph");
 	    	ClassInfoList events = eventsInfo
